@@ -38,7 +38,7 @@ parser.add_argument(
 
 # Prepare config
 args = parser.parse_args()
-config = common.parse_json_file(args.config_path)
+config = common.parse_json_config_file(args.config_path)
 output = {
     'cluster_manager_nodes': [],
     'op_worker_nodes': [],
@@ -51,7 +51,7 @@ common.merge(output, dns_output)
 
 # Start cms
 cm_output = cluster_manager.up(args.image, args.bin_cluster_manager,
-                             dns_server, uid, args.config_path, args.logdir)
+                               dns_server, uid, args.config_path, args.logdir)
 common.merge(output, cm_output)
 
 # Start workers
