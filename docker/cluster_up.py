@@ -38,7 +38,8 @@ parser.add_argument(
     '-do', '--domain',
     action='store',
     default='provider_domains',
-    help='worker domain name, can be: provider_domains or cluster_domains',        dest='domains_name')
+    help='worker domain name, can be: provider_domains or cluster_domains',
+    dest='domains_name')
 
 # Prepare config
 args = parser.parse_args()
