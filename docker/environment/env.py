@@ -69,9 +69,13 @@ def up(config_path, image=default('image'), bin_am=default('bin_am'),
 
     # Start storages
     storages_dockers = {'ceph': {}, 's3': {}}
-    for _, cfg in config['os_configs'].iteritems():
+    for key, cfg in config['os_configs'].iteritems():
         for storage in cfg['storages']:
             if isinstance(storage, basestring):
+                sys.stderr.write('''WARNING:
+    Detected deprecated syntax at os_configs.%s.storages
+    Change entry %s to: { "type": "posix", "name": "%s" }
+    In file %s''' % (key, storage, storage, config_path))
                 break
             if storage['type'] == 'ceph' and storage['name'] not in storages_dockers['ceph']:
                 ceph_image = storage['image'] if 'image' in storage else 'onedata/ceph'
