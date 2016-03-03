@@ -16,7 +16,10 @@
     "os_configs": {
         "cfg1": {
             "storages": [
-                "/mnt/st1"
+                {
+                    "type": "posix",
+                    "name": "/mnt/st1"
+                }
             ],
             "users": [
                 "user1",
@@ -36,7 +39,7 @@
     },
     "provider_domains": {
         "p1": {
-            "db_driver": "couchbase",
+            "db_driver": "couchdb",
             "os_config": "cfg1",
             "gui_livereload": true,
             "cluster_manager": {
