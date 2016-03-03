@@ -37,7 +37,7 @@ parser.add_argument(
 parser.add_argument(
     '--report-path', '-r',
     action='store',
-    default='tests-reports/results.xml',
+    default='test-reports/results.xml',
     help='Path to JUnit tests report',
     dest='report_path')
 
