@@ -111,7 +111,7 @@
             }
         },
         "p2.oz": {
-            "db_driver": "riak",
+            "db_driver": "couchdb",
             "os_config": "cfg2",
             "gui_livereload": false,
             "cluster_manager": {
