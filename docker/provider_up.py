@@ -51,7 +51,7 @@ common.merge(output, dns_output)
 
 # Start cms
 cm_output = cluster_manager.up(args.image, args.bin_cluster_manager,
-                             dns_server, uid, args.config_path, args.logdir)
+                               dns_server, uid, args.config_path, args.logdir)
 common.merge(output, cm_output)
 
 # Start workers

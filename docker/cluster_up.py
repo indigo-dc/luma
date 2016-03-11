@@ -34,6 +34,12 @@ parser.add_argument(
     default=os.getcwd() + '/cluster_manager',
     help='the path to cluster_manager repository (precompiled)',
     dest='bin_cluster_manager')
+parser.add_argument(
+    '-do', '--domain',
+    action='store',
+    default='provider_domains',
+    help='worker domain name, can be: provider_domains or cluster_domains',
+    dest='domains_name')
 
 # Prepare config
 args = parser.parse_args()
@@ -49,11 +55,14 @@ uid = common.generate_uid()
 common.merge(output, dns_output)
 
 # Start cms
-cm_output = cluster_manager.up(args.image, args.bin_cluster_manager, dns_server, uid, args.config_path, args.logdir)
+cm_output = cluster_manager.up(args.image, args.bin_cluster_manager, dns_server,
+                               uid, args.config_path, args.logdir,
+                               args.domains_name)
 common.merge(output, cm_output)
 
 # Start workers
-worker_output = cluster_worker.up(args.image, args.bin_op_worker, dns_server, uid, args.config_path, args.logdir)
+worker_output = cluster_worker.up(args.image, args.bin_op_worker, dns_server,
+                                  uid, args.config_path, args.logdir)
 common.merge(output, worker_output)
 
 # Make sure domain are added to the dns server
