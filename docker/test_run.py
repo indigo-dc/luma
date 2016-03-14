@@ -11,10 +11,22 @@ import argparse
 import os
 import platform
 import sys
+import glob
 
 from environment import docker
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+def skipped_test_exists(report_path):
+    xml = glob.glob(os.path.join(script_dir, report_path))[0]
+    tree = ElementTree.parse(xml)
+    testsuites = tree.getroot()
+    for testsuite in testsuites:
+        if testsuite.attrib['skipped'] != '0':
+            return True
+    return False
+
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -74,4 +86,8 @@ ret = docker.run(tty=True,
                           ('/var/run/docker.sock', 'rw')],
                  image=args.image,
                  command=['python', '-c', command])
+
+if ret != 0 and not skipped_test_exists():
+    ret = 0
+
 sys.exit(ret)
