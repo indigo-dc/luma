@@ -26,11 +26,9 @@ import sys
 import time
 import xml.etree.ElementTree as ElementTree
 
-SUREFIRE_REPORT = "surefire.xml"
-
 
 def skipped_test_exists():
-    xmls = glob.glob("test_distributed/logs/*/{0}".format(SUREFIRE_REPORT))
+    xmls = glob.glob("test_distributed/logs/*/surefire.xml")
     xmls.sort()
     tree = ElementTree.parse(xmls[-1])
     testsuites = tree.getroot()
@@ -141,7 +139,7 @@ ct_command = ['ct_run',
               '-abort_if_missing_suites',
               '-dir', '.',
               '-logdir', './logs/',
-              '-ct_hooks', 'cth_surefire', '[{{path, {surefire_report}}}]'.format(surefire_report=SUREFIRE_REPORT),
+              '-ct_hooks', 'cth_surefire', '[{path, "surefire.xml"}]',
               '-noshell',
               '-name', 'testmaster@testmaster.{0}.dev.docker'.format(uid),
               '-include', '../include', '../deps']
@@ -232,7 +230,7 @@ command = {cmd}
 ret = subprocess.call(command)
 
 import xml.etree.ElementTree as ElementTree, glob, re
-for file in glob.glob('logs/*/{surefire_report}'):
+for file in glob.glob('logs/*/surefire.xml'):
     tree = ElementTree.parse(file)
     for suite in tree.findall('.//testsuite'):
         for test in suite.findall('testcase'):
@@ -244,7 +242,6 @@ for file in glob.glob('logs/*/{surefire_report}'):
 sys.exit(ret)
 '''
 command = command.format(
-    surefire_report=SUREFIRE_REPORT,
     uid=os.geteuid(),
     gid=os.getegid(),
     cmd=ct_command,
