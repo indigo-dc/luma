@@ -24,22 +24,11 @@ import re
 import shutil
 import sys
 import time
-import xml.etree.ElementTree as ElementTree
-
-
-def skipped_test_exists():
-    xmls = glob.glob("test_distributed/logs/*/surefire.xml")
-    xmls.sort()
-    tree = ElementTree.parse(xmls[-1])
-    testsuites = tree.getroot()
-    for testsuite in testsuites:
-        if testsuite.attrib['skipped'] != '0':
-            return True
-    return False
-
+from test_run_utils import skipped_test_exists
 
 sys.path.insert(0, 'bamboos/docker')
 from environment import docker
+
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -264,7 +253,7 @@ if args.cover:
         os.remove(file)
         shutil.move(file + '.bak', file)
 
-if ret != 0 and not skipped_test_exists():
+if ret != 0 and not skipped_test_exists("test_distributed/logs/*/surefire.xml"):
     ret = 0
 
 sys.exit(ret)
