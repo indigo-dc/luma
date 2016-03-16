@@ -208,8 +208,8 @@
     },
     "zone_domains": {
         "oz": {
-            "gui_livereload": "none",
             "db_driver": "couchdb",
+            "gui_livereload": "none",
             "cluster_manager": {
                 "cm": {
                     "vm.args": {
