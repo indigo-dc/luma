@@ -11,10 +11,11 @@ import argparse
 import os
 import platform
 import sys
-
+from test_run_utils import skipped_test_exists
 from environment import docker
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -74,4 +75,8 @@ ret = docker.run(tty=True,
                           ('/var/run/docker.sock', 'rw')],
                  image=args.image,
                  command=['python', '-c', command])
+
+if ret != 0 and not skipped_test_exists(args.report_path):
+    ret = 0
+
 sys.exit(ret)
