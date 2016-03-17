@@ -253,7 +253,7 @@ if args.cover:
         os.remove(file)
         shutil.move(file + '.bak', file)
 
-if ret != 0 and not skipped_test_exists("test_distributed/logs/*/surefire.xml"):
+if ret != 0 and not skipped_test_exists("test_distributed/logs/*/surefire.xml", 'skipped'):
     ret = 0
 
 sys.exit(ret)
