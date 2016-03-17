@@ -9,13 +9,13 @@ import glob
 import xml.etree.ElementTree as ElementTree
 
 
-def skipped_test_exists(junit_report_path):
+def skipped_test_exists(junit_report_path, skipped_key):
     reports = glob.glob(junit_report_path)
     # if there are many reports, check only the last one
     reports.sort()
     tree = ElementTree.parse(reports[-1])
     testsuites = tree.getroot()
     for testsuite in testsuites:
-        if testsuite.attrib['skipped'] != '0':
+        if testsuite.attrib[skipped_key] != '0':
             return True
     return False
