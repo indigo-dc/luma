@@ -24,9 +24,11 @@ import re
 import shutil
 import sys
 import time
+from test_run_utils import skipped_test_exists
 
 sys.path.insert(0, 'bamboos/docker')
 from environment import docker
+
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -250,5 +252,8 @@ if args.cover:
     for file in env_descs:
         os.remove(file)
         shutil.move(file + '.bak', file)
+
+if ret != 0 and not skipped_test_exists("test_distributed/logs/*/surefire.xml"):
+    ret = 0
 
 sys.exit(ret)
