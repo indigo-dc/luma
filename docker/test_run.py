@@ -76,7 +76,7 @@ ret = docker.run(tty=True,
                  image=args.image,
                  command=['python', '-c', command])
 
-if ret != 0 and not skipped_test_exists(args.report_path):
+if ret != 0 and not skipped_test_exists(args.report_path, 'skips'):
     ret = 0
 
 sys.exit(ret)
