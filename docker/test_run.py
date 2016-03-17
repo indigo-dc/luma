@@ -11,10 +11,22 @@ import argparse
 import os
 import platform
 import sys
-from test_run_utils import skipped_test_exists
 from environment import docker
+import glob
+import xml.etree.ElementTree as ElementTree
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+def skipped_test_exists(junit_report_path):
+    reports = glob.glob(junit_report_path)
+    # if there are many reports, check only the last one
+    reports.sort()
+    tree = ElementTree.parse(reports[-1])
+    testsuite = tree.getroot()
+    if testsuite.attrib['skips'] != '0':
+        return True
+    return False
 
 
 parser = argparse.ArgumentParser(
@@ -76,7 +88,7 @@ ret = docker.run(tty=True,
                  image=args.image,
                  command=['python', '-c', command])
 
-if ret != 0 and not skipped_test_exists(args.report_path, 'skips'):
+if ret != 0 and not skipped_test_exists(args.report_path):
     ret = 0
 
 sys.exit(ret)
