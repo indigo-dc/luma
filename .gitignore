@@ -1,3 +1,7 @@
+.git
+.settings
+.idea
+
 config.cfg
 example_config/config.cfg
 example_config/credentials_mapping.json
