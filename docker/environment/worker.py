@@ -78,6 +78,7 @@ def _node_up(image, bindir, config, dns_servers, db_node_mappings, logdir,
         db_nodes[i] = db_node_mappings[db_nodes[i]]
 
     (name, sep, hostname) = node_name.partition('@')
+    (_, _, domain) = hostname.partition('.')
 
     command = '''set -e
 mkdir -p /root/bin/node/log/
@@ -89,9 +90,12 @@ EOF
 sed -i.bak s/\"IP_PLACEHOLDER\"/\"`ip addr show eth0 | grep "inet\\b" | awk '{{print $2}}' | cut -d/ -f1`\"/g /tmp/gen_dev_args.json
 escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json
 mkdir -p /root/bin/node/data/
+touch /root/bin/node/data/dns.config
+sed -i.bak s/onedata.org/{domain}/g /root/bin/node/data/dns.config
 /root/bin/node/bin/{executable} console'''
 
     command = command.format(
+        domain=domain,
         gen_dev_args=json.dumps({configurator.app_name(): config}),
         uid=os.geteuid(),
         gid=os.getegid(),
