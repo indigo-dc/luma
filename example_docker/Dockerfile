@@ -7,15 +7,18 @@ RUN apt-get update && \
     apt-get clean
 
 # Install basic packages
-RUN apt-get install -y curl python python-setuptools python-rados && \
-    apt-get clean
+RUN apt-get install -y curl python python-setuptools && apt-get clean
 
 # Install luma dependencies
 RUN easy_install Flask Flask-SQLAlchemy
 
-RUN mkdir -p /root/luma
 ADD luma /root/luma
 ADD run_luma.sh /root/luma
+
+# Add default configurations
+ADD config.cfg /root/luma
+ADD generators_mapping.json /root/luma
+ADD generators.cfg /root/luma/generators
 
 EXPOSE 5000
 
