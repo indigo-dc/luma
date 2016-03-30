@@ -1,5 +1,5 @@
-Start LUMA 
-=====
+Start Luma
+==========
 
 **Init LUMA database**
 ----
