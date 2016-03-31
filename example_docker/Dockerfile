@@ -7,12 +7,14 @@ RUN apt-get update && \
     apt-get clean
 
 # Install basic packages
-RUN apt-get install -y curl python python-setuptools && apt-get clean
+RUN apt-get install -y curl python python-setuptools python-rados && \
+    apt-get clean
 
 # Install luma dependencies
 RUN easy_install Flask Flask-SQLAlchemy
 
-ADD luma /root/luma
+COPY luma.tar /root
+RUN cd /root && tar -xf luma.tar
 ADD run_luma.sh /root/luma
 
 # Add default configurations
