@@ -13,8 +13,7 @@ RUN apt-get install -y curl python python-setuptools python-rados && \
 # Install luma dependencies
 RUN easy_install Flask Flask-SQLAlchemy
 
-COPY luma.tar /root
-RUN cd /root && tar -xf luma.tar
+ADD luma.tar /root/luma
 ADD run_luma.sh /root/luma
 
 # Add default configurations
