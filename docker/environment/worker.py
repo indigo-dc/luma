@@ -67,8 +67,6 @@ def _node_up(image, bindir, config, dns_servers, db_node_mappings, logdir,
     node_name = config['nodes']['node']['vm.args']['name']
     db_nodes = config['nodes']['node']['sys.config'][app_name]['db_nodes']
 
-    sys_config = config['nodes']['node']['sys.config']
-
     for i in range(len(db_nodes)):
         db_nodes[i] = db_node_mappings[db_nodes[i]]
 
