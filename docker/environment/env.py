@@ -12,7 +12,7 @@ import copy
 import json
 import time
 from . import appmock, client, common, zone_worker, cluster_manager, \
-    worker, provider_worker, cluster_worker, docker, dns, s3, ceph
+    worker, provider_worker, cluster_worker, docker, dns, s3, ceph, luma
 
 
 def default(key):
@@ -25,6 +25,7 @@ def default(key):
             'bin_cluster_worker': '{0}/cluster_worker'.format(os.getcwd()),
             'bin_cluster_manager': '{0}/cluster_manager'.format(os.getcwd()),
             'bin_oc': '{0}/oneclient'.format(os.getcwd()),
+            'bin_luma': '{0}/luma'.format(os.getcwd()),
             'logdir': None}[key]
 
 
@@ -34,7 +35,8 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
        bin_cluster_manager=default('bin_cluster_manager'),
        bin_op_worker=default('bin_op_worker'),
        bin_cluster_worker=default('bin_cluster_worker'),
-       bin_oc=default('bin_oc'), logdir=default('logdir')):
+       bin_oc=default('bin_oc'), bin_luma=default('bin_luma'),
+       logdir=default('logdir')):
     config = common.parse_json_config_file(config_path)
     uid = common.generate_uid()
 
@@ -72,10 +74,16 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
     output['storages'] = storages_dockers
     output['docker_ids'].extend(storages_dockers_ids)
 
+    # Start python LUMA service
+    luma_config = None
+    if 'provider_domains' in config:
+        luma_config = _start_luma(config, storages_dockers, image, bin_luma,
+                                  output, uid)
+
     # Start provider cluster instances
     setup_worker(provider_worker, bin_op_worker, 'provider_domains',
                  bin_cluster_manager, config, config_path, dns_server, image,
-                 logdir, output, uid, storages_dockers)
+                 logdir, output, uid, storages_dockers, luma_config)
 
     # Start stock cluster worker instances
     setup_worker(cluster_worker, bin_cluster_worker, 'cluster_domains',
@@ -154,7 +162,8 @@ echo $?'''
 
 
 def setup_worker(worker, bin_worker, domains_name, bin_cm, config, config_path,
-                 dns_server, image, logdir, output, uid, storages_dockers=None):
+                 dns_server, image, logdir, output, uid, storages_dockers=None,
+                 luma_config=None):
     if domains_name in config:
         # Start cluster_manager instances
         cluster_manager_output = cluster_manager.up(image, bin_cm, dns_server,
@@ -164,7 +173,9 @@ def setup_worker(worker, bin_worker, domains_name, bin_cm, config, config_path,
 
         # Start op_worker instances
         cluster_worker_output = worker.up(image, bin_worker, dns_server, uid,
-                                          config_path, logdir, storages_dockers)
+                                          config_path, logdir,
+                                          storages_dockers=storages_dockers,
+                                          luma_config=luma_config)
         common.merge(output, cluster_worker_output)
         # Make sure OP domains are added to the dns server.
         # Setting first arg to 'auto' will force the restart and this is needed
@@ -196,3 +207,27 @@ def _start_storages(config, config_path, ceph_image, s3_image):
                     del result['docker_ids']
                     storages_dockers['s3'][storage['name']] = result
     return storages_dockers, docker_ids
+
+
+def _start_luma(config, storages_dockers, image, bin_luma, output, uid):
+    enable_luma_proxy = False
+    for key in config['provider_domains']:
+        if config['provider_domains'][key].get('enable_luma_proxy'):
+            enable_luma_proxy = True
+            break
+    luma_config = None
+    if enable_luma_proxy:
+        if 'luma_setup' not in config:
+            luma_config = luma.get_default_config()
+            if storages_dockers['ceph']:
+                ceph_config = storages_dockers['ceph'].values()[0]
+                luma_config['generators_config']['ceph']['key'] = \
+                    ceph_config['key']
+                luma_config['generators_config']['ceph']['mon_host'] = \
+                    ceph_config['host_name']
+            config['luma_setup'] = luma_config
+
+        luma_config = luma.up(image, bin_luma, config, uid)
+        output['docker_ids'].extend(luma_config['docker_ids'])
+        output['luma'] = {'host_name': luma_config['host_name']}
+    return luma_config
