@@ -126,19 +126,23 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             pool = storage['pool'].split(':')[0]
             command = ['escript', script_paths['ceph'], cookie,
                        first_node, storage['name'], "ceph",
-                       config['host_name'], pool, config['username'], config['key']]
+                       config['host_name'], pool, config['username'],
+                       config['key']]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 's3':
             config = storages_dockers['s3'][storage['name']]
             command = ['escript', script_paths['s3'], cookie,
                        first_node, storage['name'], config['host_name'],
-                       storage['bucket'], config['access_key'], config['secret_key'],
-                       "iam.amazonaws.com"]
+                       storage['bucket'], config['access_key'],
+                       config['secret_key'],
+                       config.get('iam_request_scheme', 'https'),
+                       config.get('iam_host', 'iam.amazonaws.com')]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         else:
-            raise RuntimeError('Unknown storage type: {}'.format(storage['type']))
+            raise RuntimeError(
+                'Unknown storage type: {}'.format(storage['type']))
     # clean-up
     for _, script_name in script_names.iteritems():
         command = ['rm', os.path.join(bindir, script_name)]
