@@ -13,9 +13,12 @@ from . import common, docker, worker, gui_livereload
 DOCKER_BINDIR_PATH = '/root/build'
 
 
-def up(image, bindir, dns_server, uid, config_path, logdir=None, storages_dockers=None):
+def up(image, bindir, dns_server, uid, config_path, logdir=None,
+       storages_dockers=None, luma_config=None):
     return worker.up(image, bindir, dns_server, uid, config_path,
-                     ProviderWorkerConfigurator(), logdir, storages_dockers)
+                     ProviderWorkerConfigurator(), logdir,
+                     storages_dockers=storages_dockers,
+                     luma_config=luma_config)
 
 
 class ProviderWorkerConfigurator:
@@ -32,11 +35,12 @@ class ProviderWorkerConfigurator:
                     'string': '/root/gui_static'}
         return cfg
 
-    def pre_start_commands(self, bindir, config, domain, worker_ips):
-        return ''
+    def pre_start_commands(self, domain):
+        return 'escript bamboos/gen_dev/gen_dev.escript /tmp/gen_dev_args.json'
 
     def configure_started_instance(self, bindir, instance, config,
-                                   container_ids, output, storages_dockers=None):
+                                   container_ids, output, storages_dockers=None,
+                                   luma_config=None):
         this_config = config[self.domains_attribute()][instance]
         # Check if gui_livereload is enabled in env and turn it on
         if 'gui_livereload' in this_config:
