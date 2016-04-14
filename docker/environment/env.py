@@ -12,7 +12,8 @@ import copy
 import json
 import time
 from . import appmock, client, common, zone_worker, cluster_manager, \
-    worker, provider_worker, cluster_worker, docker, dns, s3, ceph, luma
+    worker, provider_worker, cluster_worker, docker, dns, s3, ceph, \
+    amazon_iam, luma
 
 
 def default(key):
@@ -70,7 +71,8 @@ def up(config_path, image=default('image'), ceph_image=default('ceph_image'),
                  logdir, output, uid)
 
     # Start storages
-    storages_dockers, storages_dockers_ids = _start_storages(config, config_path, ceph_image, s3_image)
+    storages_dockers, storages_dockers_ids = \
+        _start_storages(config, config_path, ceph_image, s3_image, image, uid)
     output['storages'] = storages_dockers
     output['docker_ids'].extend(storages_dockers_ids)
 
@@ -183,10 +185,11 @@ def setup_worker(worker, bin_worker, domains_name, bin_cm, config, config_path,
         dns.maybe_restart_with_configuration('auto', uid, output)
 
 
-def _start_storages(config, config_path, ceph_image, s3_image):
+def _start_storages(config, config_path, ceph_image, s3_image, image, uid):
     storages_dockers = {'ceph': {}, 's3': {}}
     docker_ids = []
     if 'os_configs' in config:
+        start_iam_mock = False
         for key, cfg in config['os_configs'].iteritems():
             for storage in cfg['storages']:
                 if isinstance(storage, basestring):
@@ -195,18 +198,50 @@ def _start_storages(config, config_path, ceph_image, s3_image):
         Change entry "{1}" to: {{ "type": "posix", "name": "{1}" }}
         In file {2}'''.format(key, storage, config_path))
                     break
-                if storage['type'] == 'ceph' and storage['name'] not in storages_dockers['ceph']:
+                if storage['type'] == 'ceph' and storage['name'] not in \
+                        storages_dockers['ceph']:
                     pool = tuple(storage['pool'].split(':'))
                     result = ceph.up(ceph_image, [pool])
                     docker_ids.extend(result['docker_ids'])
                     del result['docker_ids']
                     storages_dockers['ceph'][storage['name']] = result
-                elif storage['type'] == 's3' and storage['name'] not in storages_dockers['s3']:
+                elif storage['type'] == 's3' and storage['name'] not in \
+                        storages_dockers['s3']:
                     result = s3.up(s3_image, [storage['bucket']])
                     docker_ids.extend(result['docker_ids'])
                     del result['docker_ids']
+
+                    start_iam_mock = _want_start_iam_mock(storage)
+                    if 'iam_host' in storage and 'iam_request_scheme' in storage:
+                        result['iam_host'] = storage['iam_host']
+                        result['iam_request_scheme'] = storage['iam_request_scheme']
+
                     storages_dockers['s3'][storage['name']] = result
+
+        if start_iam_mock:
+            docker_ids.extend(_start_iam_mock(image, uid, storages_dockers))
+
     return storages_dockers, docker_ids
+
+
+def _want_start_iam_mock(storage):
+    return 'iam_host' not in storage and 'request_scheme' not in storage and \
+           not storage.get('disable_iam_mock', False)
+
+
+def _start_iam_mock(image, uid, storages_dockers):
+    iam_mock_config = amazon_iam.up(image, uid)
+
+    iam_request_scheme = 'http'
+    iam_host = iam_mock_config['host_name']
+    for key in storages_dockers['s3'].keys():
+        if 'iam_host' not in storages_dockers['s3'][key] and \
+                        'request_scheme' not in storages_dockers['s3'][key]:
+            storages_dockers['s3'][key]['iam_host'] = iam_host
+            storages_dockers['s3'][key][
+                'iam_request_scheme'] = iam_request_scheme
+
+    return iam_mock_config['docker_ids']
 
 
 def _start_luma(config, storages_dockers, image, bin_luma, output, uid):
