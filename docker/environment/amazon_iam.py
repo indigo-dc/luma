@@ -14,7 +14,7 @@ IAM_MOCK_FILE_NAME = 'amazon_iam_mock.py'
 
 
 def _node_up(image, uid):
-    hostname = common.format_hostname('amazon_iam', uid)
+    hostname = common.format_hostname('amazon-iam', uid)
     file_location = os.path.dirname(os.path.realpath(__file__))
     container = docker.run(
         image=image, privileged=True,
