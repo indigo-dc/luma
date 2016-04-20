@@ -37,6 +37,10 @@
                   "type": "s3",
                   "name": "s3",
                   "bucket": "onedata"
+                },
+                {
+                  "type": "nfs",
+                  "name": "/mnt/st2",
                 }
             ],
             "users": [
