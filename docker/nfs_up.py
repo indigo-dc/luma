@@ -15,6 +15,7 @@ import argparse
 import json
 
 from environment import nfs
+from environment import common
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -28,6 +29,6 @@ parser.add_argument(
     dest='image')
 
 args = parser.parse_args()
-config = nfs.up(args.image)
+config = nfs.up(args.image, common.generate_uid(), 'storage')
 
 print(json.dumps(config))

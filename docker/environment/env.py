@@ -223,7 +223,7 @@ def _start_storages(config, config_path, ceph_image, s3_image, nfs_image, image,
                     storages_dockers['s3'][storage['name']] = result
                 elif storage['type'] == 'nfs' and storage['name'] not in \
                         storages_dockers['nfs']:
-                    result = nfs.up(nfs_image)
+                    result = nfs.up(nfs_image, uid, storage['name'])
                     docker_ids.extend(result['docker_ids'])
 
                     # create system users and groups on nfs docker

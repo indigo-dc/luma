@@ -7,13 +7,16 @@ Brings up a nfs server.
 """
 
 from . import docker
+from . import common
 
-def _node_up(image):
+def _node_up(image, uid, name):
+    hostname = common.format_hostname([name.replace('/', '-').strip('-'), 'nfs'], uid)
     container = docker.run(
         image=image,
         detach=True,
+        name=hostname,
+        hostname=hostname,
         privileged=True)
-
     settings = docker.inspect(container)
     ip = settings['NetworkSettings']['IPAddress']
 
@@ -23,5 +26,5 @@ def _node_up(image):
     }
 
 
-def up(image):
-    return _node_up(image)
+def up(image, uid, name):
+    return _node_up(image, uid, name)

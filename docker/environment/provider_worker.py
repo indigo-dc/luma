@@ -121,8 +121,8 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
             storage = {'type': 'posix', 'name': storage}
         if storage['type'] in ['posix', 'nfs']:
             st_path = storage['name']
-            command = ['escript', script_paths[storage['type']], cookie,
-                       first_node, 'posix', st_path]
+            command = ['escript', script_paths['posix'], cookie,
+                       first_node, storage['name'], st_path]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
         elif storage['type'] == 'ceph':
