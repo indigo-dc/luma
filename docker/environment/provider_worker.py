@@ -102,7 +102,8 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     # copy escript to docker host
     script_names = {'posix': 'create_posix_storage.escript',
                     's3': 'create_s3_storage.escript',
-                    'ceph': 'create_ceph_storage.escript'}
+                    'ceph': 'create_ceph_storage.escript',
+                    'nfs': 'create_posix_storage.escript'}
     pwd = common.get_script_dir()
     for _, script_name in script_names.iteritems():
         command = ['cp', os.path.join(pwd, script_name),
@@ -119,9 +120,9 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
     for storage in storages:
         if isinstance(storage, basestring):
             storage = {'type': 'posix', 'name': storage}
-        if storage['type'] == 'posix':
+        if storage['type'] in ['posix', 'nfs']:
             st_path = storage['name']
-            command = ['escript', script_paths['posix'], cookie,
+            command = ['escript', script_paths[storage['type']], cookie,
                        first_node, storage['name'], st_path]
             assert 0 is docker.exec_(container, command, tty=True,
                                      stdout=sys.stdout, stderr=sys.stderr)
@@ -149,5 +150,5 @@ def create_storages(storages, op_nodes, op_config, bindir, storages_dockers):
                 'Unknown storage type: {}'.format(storage['type']))
     # clean-up
     for _, script_name in script_names.iteritems():
-        command = ['rm', os.path.join(bindir, script_name)]
+        command = ['rm', '-f', os.path.join(bindir, script_name)]
         subprocess.check_call(command)
