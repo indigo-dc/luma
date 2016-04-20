@@ -28,6 +28,6 @@ parser.add_argument(
     dest='image')
 
 args = parser.parse_args()
-config = nfs.up(args.image, args.buckets)
+config = nfs.up(args.image)
 
 print(json.dumps(config))
