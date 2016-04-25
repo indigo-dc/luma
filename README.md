@@ -122,7 +122,7 @@ more examples can be found in `generators/generators.cfg.example`.
 ### Registering Generators
 
 #### Pairing generator with storage_id
-The generators need to be paired with specyfic storage by specifying a tuple of `storage_id` and `generator_id` (storage type may be provided as `storage_id`).  Those mappings are located in **generators_mapping.json** Example file is located in `/example_config` folder.
+The generators need to be paired with specyfic storage by specifying a tuple of `storage_id` and `generator_id` (storage type may be provided as `storage_id`).  Those mappings are located in **generators_mapping.json** and can be passed to luma via command line options. Example file is located in `/example_config` folder.
 
 ```json
 [
