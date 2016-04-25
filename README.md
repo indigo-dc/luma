@@ -26,9 +26,9 @@ $ ./init_db.py
 
 Optional arguments:
 
-| Param                      | Description                              |
-| :------------------------- | :--------------------------------------- |
-| -h, --help                 | help message and exit                    |
+| Param                      | Description                                           |
+|:---------------------------|:------------------------------------------------------|
+| -h, --help                 | help message and exit                                 |
 | -c CONFIG, --config CONFIG | cfg file with app configuration (default: config.cfg) |
 
 
@@ -42,18 +42,18 @@ $ ./main.py
 
 Optional arguments:
 
-| Param                                    | Description                              |
-| ---------------------------------------- | :--------------------------------------- |
-| -h, --help                               | help message and exit                    |
-| -cm CREDENTIALS_MAPPING_FILE, --credentials-mapping CREDENTIALS_MAPPING_FILE | json file with array of credentials mappings (default:None) |
-| -gm GENERATORS_MAPPING, --generators-mapping GENERATORS_MAPPING | json file with array of storages to generators mappings (default: None) |
-| -sm STORAGES_MAPPING, --storages-mapping STORAGES_MAPPING | json file with array of storage id to type mappings (default: None) |
-| -c CONFIG, --config CONFIG               | cfg file with app configuration (default: config.cfg) |
+| Param                                                                        | Description                                                             |
+|:-----------------------------------------------------------------------------|:------------------------------------------------------------------------|
+| -h, --help                                                                   | help message and exit                                                   |
+| -cm CREDENTIALS_MAPPING_FILE, --credentials-mapping CREDENTIALS_MAPPING_FILE | json file with array of credentials mappings (default:None)             |
+| -gm GENERATORS_MAPPING, --generators-mapping GENERATORS_MAPPING              | json file with array of storages to generators mappings (default: None) |
+| -sm STORAGES_MAPPING, --storages-mapping STORAGES_MAPPING                    | json file with array of storage id to type mappings (default: None)     |
+| -c CONFIG, --config CONFIG                                                   | cfg file with app configuration (default: config.cfg)                   |
 
 
 ## Extending LUMA
 
-LUMA implements support for storages by means of generators. 
+LUMA implements support for storages by means of generators.
 
 ### Adding new generators
 To support new storage or existing one in different way, user should create a python script in `generators` folder. All files in this folder are scanned by LUMA.
@@ -122,7 +122,7 @@ more examples can be found in `generators/generators.cfg.example`.
 ### Registering Generators
 
 #### Pairing generator with storage_id
-The generators needs to be paired with specyfic storage by specifying a tuple of `storage_id` and `generator_id` (storage type may be provided as `storage_id`).  Those mappings are located in **generators_mapping.json** Example file is located in `/example_config` folder.
+The generators need to be paired with specyfic storage by specifying a tuple of `storage_id` and `generator_id` (storage type may be provided as `storage_id`).  Those mappings are located in **generators_mapping.json** Example file is located in `/example_config` folder.
 
 ```json
 [
@@ -142,7 +142,7 @@ The generators needs to be paired with specyfic storage by specifying a tuple of
 ```
 
 #### Registering id to type mapping
-Additionally one can specify a pairing of `storage_id` and `storage_type`. If LUMA fails to use a generator for a specyifc `storage_id` it will then try to find one matching `storage_type`.
+Additionally, one can specify a pairing of `storage_id` and `storage_type`. If LUMA fails to use a generator for a specyifc `storage_id` it will then try to find one matching `storage_type`.
 
 ```json
 [
@@ -173,9 +173,9 @@ Sometimes one might need to bypass the generators for specific users. LUMA allow
   {
     "global_id": "id2",
     "storage_id": "storage_id2",
-    "credentials": { 
-      "access_key": "ACCESS_KEY", 
-      "secret_key": "SECRET_KEY" 
+    "credentials": {
+      "access_key": "ACCESS_KEY",
+      "secret_key": "SECRET_KEY"
     }
   }
 ]
@@ -185,8 +185,8 @@ Sometimes one might need to bypass the generators for specific users. LUMA allow
 LUMA configuration file allows you to specify:
 ```shell
 DATABASE = 'luma_database.db' # db path
-HOST = '0.0.0.0' # the hostname to listen on. Set this to '0.0.0.0' to have the server available externally 
-PORT = 5000 # the port of the webserver. Defaults to 5000 
+HOST = '0.0.0.0' # the hostname to listen on. Set this to '0.0.0.0' to have the server available externally
+PORT = 5000 # the port of the webserver. Defaults to 5000
 ```
 and any option described in Flask [documentation](http://flask.pocoo.org/docs/0.10/config/#builtin-configuration-values)
 
@@ -205,14 +205,14 @@ Returns json with user credentials to storage. Use `GET` method.
 
 #### URL Params
 
-| Param           | Description                              |
-| :-------------- | :--------------------------------------- |
-| global_id       | user global id                           |
-| storage_type    | storage type e.g. `Ceph`                 |
-| storage_id      | storage id (storage type may be provided instead of id) |
+| Param           | Description                                                  |
+|:----------------|:-------------------------------------------------------------|
+| global_id       | user global id                                               |
+| storage_type    | storage type e.g. `Ceph`                                     |
+| storage_id      | storage id (storage type may be provided instead of id)      |
 | source_ips      | IPs list of provider performing query as string encoded JSON |
-| source_hostname | hostname of provider performing query    |
-| user_details    | detail information of user as string encoded JSON |
+| source_hostname | hostname of provider performing query                        |
+| user_details    | detail information of user as string encoded JSON            |
 
 **NOTE:** One of `storage_id`, `storage_type` may be omitted in request.
 
@@ -220,14 +220,14 @@ User details:
 
 * id
 * name
-* connected_accounts - list of open id acconts, each containing: 
+* connected_accounts - list of open id acconts, each containing:
 	* provider_id
     * user_id
     * login
     * name
     * email_list
 * alias
-* email_list 
+* email_list
 
 ### Success Response:
 
@@ -288,5 +288,3 @@ curl --get -d global_id=1 -d storage_type=DirectIO -d source_hostname=hostname -
 curl --get -d global_id=0 -d storage_type=Ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  172.17.0.12:5000/get_user_credentials
 curl --get -d global_id=1 -d storage_type=AmazonS3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  172.17.0.12:5000/get_user_credentials
 ```
-
-
