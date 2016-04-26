@@ -11,3 +11,4 @@ luma.tar
 
 dockerbuild-report.txt
 dockerbuild-sha.txt
+dockerpublish-report.txt
