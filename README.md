@@ -282,9 +282,9 @@ Used in [Onedata](onedata.org), LUMA allows to map Onedata user credentials to s
 ## LUMA Docker Image
 Every release of LUMA is published as a docker image. Here are few example commands how to use it:
 ```shell
-docker run -it docker.onedata.org/luma:a1ee3b1
+docker run -it onedata/luma:VFS-1951
 
-curl --get -d global_id=1 -d storage_type=DirectIO -d source_hostname=hostname -d source_ips=[] -d user_details={}  172.17.0.12:5000/get_user_credentials
-curl --get -d global_id=0 -d storage_type=Ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  172.17.0.12:5000/get_user_credentials
-curl --get -d global_id=1 -d storage_type=AmazonS3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  172.17.0.12:5000/get_user_credentials
+curl --get -d global_id=1 -d storage_type=DirectIO -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+curl --get -d global_id=0 -d storage_type=Ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+curl --get -d global_id=1 -d storage_type=AmazonS3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
 ```
