@@ -144,4 +144,4 @@ if args.generators_mapping:
 if args.storages_mapping:
     load_storage_id_to_type_mapping(app, args.storages_mapping)
 
-app.run(host=app.config['HOST'])
+app.run(host=app.config['HOST'], port=app.config.get('PORT', 5000))
