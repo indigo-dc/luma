@@ -9,8 +9,8 @@ ACCESS_KEY = config.get('s3', 'access_key')
 SECRET_KEY = config.get('s3', 'secret_key')
 
 
-def create_user_credentials(global_id, storage_type, storage_id, source_ips,
-                            source_hostname, user_details):
+def create_user_credentials(global_id, storage_type, storage_id, space_name,
+                            source_ips, source_hostname, user_details):
     """Creates user credentials for S3 storage based on provided user data.
     Sample output:
     {
