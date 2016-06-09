@@ -79,6 +79,10 @@ def get_user_credentials():
     if not storage_id and not storage_type:
         return missing_param('storage_id or storage_type')
 
+    space_name = request.values.get('space_name')
+    if not space_name:
+        return missing_param('space_name')
+
     source_ips = request.values.get('source_ips')
     if not source_ips:
         return missing_param('source_ips')
@@ -120,6 +124,7 @@ def get_user_credentials():
             credentials = generator.create_user_credentials(global_id,
                                                             storage_type,
                                                             storage_id,
+                                                            space_name,
                                                             source_ips,
                                                             source_hostname,
                                                             user_details)

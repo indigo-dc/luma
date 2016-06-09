@@ -1,8 +1,11 @@
 # LUMA - Local User MApping
 
-LUMA is a REST server that exposes simple REST API that can be used to map users (of any system/kind) to storage specific users, in the process authorizing them with the storage.
+LUMA is a REST server that exposes simple REST API that can be used to map users 
+(of any system/kind) to storage specific users, in the process authorizing them 
+with the storage.
 
-New storage types are added by means of plugin system of generators. A generator is responsible for:
+New storage types are added by means of plugin system of generators. 
+A generator is responsible for:
 
 - mapping users to storage specific users
 - creating a user credentials for accessing the actual storage
@@ -13,7 +16,9 @@ As of now there are three kinds of generators implemented in LUMA:
 - Ceph
 - Amazon S3
 
-LUMA is written using [Flask](http://flask.pocoo.org/) framework and uses [sqlite](https://www.sqlite.org/) backend to store information about user credentials.
+LUMA is written using [Flask](http://flask.pocoo.org/) framework and uses 
+[sqlite](https://www.sqlite.org/) backend to store information about user 
+credentials.
 
 ## Luma Usage Guide
 ### Initialize Database
@@ -56,7 +61,9 @@ Optional arguments:
 LUMA implements support for storages by means of generators.
 
 ### Adding new generators
-To support new storage or existing one in different way, user should create a python script in `generators` folder. All files in this folder are scanned by LUMA.
+To support new storage or existing one in different way, user should create 
+a python script in `generators` folder. All files in this folder are scanned 
+by LUMA.
 
 
 #### Sample Generator
@@ -83,32 +90,42 @@ def gen_storage_id(id):
     return LowestUID + int(m.hexdigest(), 16) % HighestUID
 
 
-def create_user_credentials(global_id, storage_type, storage_id, source_ips,
-                            source_hostname, user_details):
+def create_user_credentials(global_id, storage_type, storage_id, space_name,
+                            source_ips, source_hostname, user_details):
     """Creates user credentials for POSIX storage based on provided user data.
     Sample output:
     {
-        "uid": 31415
+        "uid": 31415,
+        "gid": 31415
     }
     """
     if global_id == "0":
-        return {'uid': 0}
+        return {'uid': 0, 'gid': 0}
 
-    return {'uid': gen_storage_id(global_id)}
+    return {'uid': gen_storage_id(global_id), 'gid': gen_storage_id(global_id)}
 ```
 
 
 It has to implement functon
 
 ```python
-def create_user_credentials(global_id, storage_type, storage_id, source_ips, source_hostname, user_details)
+def create_user_credentials(global_id, storage_type, storage_id, space_name, 
+                            source_ips, source_hostname, user_details)
 ```
 
-and return user's credentials as a DICT. For a detailed explanation of arguments, refer to REST API bellow (credentials field in successfull responses).
+and return user's credentials as a DICT. This DICT must contain:
 
-RuntimeErrors thrown in generators will be caucht by LUMA and it will be converted to a meaningfull error for the user.
+| Storage type    | Params                   | Note                              |
+|:----------------|:-------------------------|:----------------------------------|
+| Posix           | uid, gid (optional)      | If gid is omitted oneprovider will try to generate gid based on space name. If this fail gid will be equal to uid. |
+| Ceph            | user_name, user_key      |                                   |
+| Amazon S3       | access_key, secret_key   |                                   |
 
-In the file `generators.cfg` user can specify configuration of the generator. Example configuration for POSIX;
+RuntimeErrors thrown in generators will be caucht by LUMA and it will 
+be converted to a meaningfull error for the user.
+
+In the file `generators.cfg` user can specify configuration of the generator. 
+Example configuration for POSIX;
 
 ```
 [posix]
@@ -122,7 +139,11 @@ more examples can be found in `generators/generators.cfg.example`.
 ### Registering Generators
 
 #### Pairing generator with storage_id
-The generators need to be paired with specyfic storage by specifying a tuple of `storage_id` and `generator_id` (storage type may be provided as `storage_id`).  Those mappings are located in **generators_mapping.json** and can be passed to luma via command line options. Example file is located in `/example_config` folder.
+The generators need to be paired with specyfic storage by specifying a tuple of 
+`storage_id` and `generator_id` (storage type may be provided as `storage_id`). 
+Those mappings are located in **generators_mapping.json** and can be passed to 
+luma via command line options. Example file is located in `/example_config` 
+folder.
 
 ```json
 [
@@ -142,7 +163,9 @@ The generators need to be paired with specyfic storage by specifying a tuple of 
 ```
 
 #### Registering id to type mapping
-Additionally, one can specify a pairing of `storage_id` and `storage_type`. If LUMA fails to use a generator for a specyifc `storage_id` it will then try to find one matching `storage_type`.
+Additionally, one can specify a pairing of `storage_id` and `storage_type`. 
+If LUMA fails to use a generator for a specific `storage_id` it will then 
+try to find one matching `storage_type`.
 
 ```json
 [
@@ -159,7 +182,8 @@ Additionally, one can specify a pairing of `storage_id` and `storage_type`. If L
 ```
 
 #### Registering user to credentials
-Sometimes one might need to bypass the generators for specific users. LUMA allows to specify static `user(storage_type/id)->credentials` mappings:
+Sometimes one might need to bypass the generators for specific users. 
+LUMA allows to specify static `user(storage_type/id)->credentials` mappings:
 
 ```json
 [
@@ -183,11 +207,13 @@ Sometimes one might need to bypass the generators for specific users. LUMA allow
 
 ### Config
 LUMA configuration file allows you to specify:
+
 ```shell
 DATABASE = 'luma_database.db' # db path
 HOST = '0.0.0.0' # the hostname to listen on. Set this to '0.0.0.0' to have the server available externally
 PORT = 5000 # the port of the webserver. Defaults to 5000
 ```
+
 and any option described in Flask [documentation](http://flask.pocoo.org/docs/0.10/config/#builtin-configuration-values)
 
 ## LUMA API
@@ -209,7 +235,8 @@ Returns json with user credentials to storage. Use `GET` method.
 |:----------------|:-------------------------------------------------------------|
 | global_id       | user global id                                               |
 | storage_type    | storage type e.g. `Ceph`                                     |
-| storage_id      | storage id (storage type may be provided instead of id)      |
+| storage_id      | storage id                                                   |
+| space_name      | space name                                                   |
 | source_ips      | IPs list of provider performing query as string encoded JSON |
 | source_hostname | hostname of provider performing query                        |
 | user_details    | detail information of user as string encoded JSON            |
@@ -235,56 +262,77 @@ User details:
   **Content:**
   * POSIX
 
-  ```json
-  {
-      "status": "success",
-      "credentials": {
-          "uid": 31415
-      }
+```json
+{
+  "status": "success",
+  "credentials": {
+      "uid": 31415,
+      "gid": 31415
   }
-  ```
+}
+```
   * CEPH
 
-  ```json
-  {
-      "status": "success",
-      "credentials": {
-          "access_key": "ACCESS_KEY",
-          "secret_key": "SECRET_KEY"
-      }
+```json
+{
+  "status": "success",
+  "credentials": {
+      "access_key": "ACCESS_KEY",
+      "secret_key": "SECRET_KEY"
   }
-  ```
+}
+```
   * AMAZON S3
 
-  ```json
-  {
-      "status": "success",
-      "credentials": {
-          "user_name": "USER",
-          "user_key": "KEY"
-      }
+```json
+{
+  "status": "success",
+  "credentials": {
+      "user_name": "USER",
+      "user_key": "KEY"
   }
-  ```
+}
+```
 
 ### Error Response:
 
 * **Code:** 422 Unprocessable Entity <br />
-  **Content:** `{ "status: "error", "message": "Missing parameter global_id" }`
+  **Content:** 
+  
+```json
+{ 
+    "status": "error", 
+    "message": "Missing parameter global_id" 
+}
+```
 
   OR
 
 * **Code:** 500 Internal Server Error <br />
-  **Content:** `{ "status: "error", "message": "MESSAGE" }`
+  **Content:** 
+  
+```json
+{ 
+    "status": "error", 
+    "message": "MESSAGE" 
+}
+```
 
 ## LUMA in Onedata
-Used in [Onedata](onedata.org), LUMA allows to map Onedata user credentials to storage/system user credentials. By default, it is deployed as part of [Oneprovider](https://github.com/onedata/op-worker), however it can be overwritten by an external LUMA server. Admins can use an external LUMA server to define dedicated policies for credentials management.
+Used in [Onedata](onedata.org), LUMA allows to map Onedata user credentials 
+to storage/system user credentials. By default, it is deployed as part of 
+[Oneprovider](https://github.com/onedata/op-worker), however it can 
+be overwritten by an external LUMA server. Admins can use an external LUMA 
+server to define dedicated policies for credentials management.
 
 ## LUMA Docker Image
-Every release of LUMA is published as a docker image. Here are few example commands how to use it:
-```shell
-docker run -it onedata/luma:VFS-1951
+Every release of LUMA is published as a docker image. Here are few example 
+commands how to use it:
 
-curl --get -d global_id=1 -d storage_type=DirectIO -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
-curl --get -d global_id=0 -d storage_type=Ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
-curl --get -d global_id=1 -d storage_type=AmazonS3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+```shell
+docker run -it onedata/luma:VFS-2019
+
+curl --get -d global_id=1 -d storage_type=DirectIO -d space_name=posix -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+curl --get -d global_id=0 -d storage_type=Ceph -d space_name=ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+curl --get -d global_id=1 -d storage_type=AmazonS3 -d space_name=s3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
 ```

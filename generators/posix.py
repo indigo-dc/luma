@@ -16,15 +16,16 @@ def gen_storage_id(id):
     return LowestUID + int(m.hexdigest(), 16) % HighestUID
 
 
-def create_user_credentials(global_id, storage_type, storage_id, source_ips,
-                            source_hostname, user_details):
+def create_user_credentials(global_id, storage_type, storage_id, space_name,
+                            source_ips, source_hostname, user_details):
     """Creates user credentials for POSIX storage based on provided user data.
     Sample output:
     {
-        "uid": 31415
+        "uid": 31415,
+        "gid": 31415
     }
     """
     if global_id == "0":
-        return {'uid': 0}
+        return {'uid': 0, 'gid': 0}
 
-    return {'uid': gen_storage_id(global_id)}
+    return {'uid': gen_storage_id(global_id), 'gid': gen_storage_id(global_id)}

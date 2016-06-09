@@ -13,8 +13,8 @@ KEY = config.get('ceph', 'key')
 MON_HOST = config.get('ceph', 'mon_host')
 
 
-def create_user_credentials(global_id, storage_type, storage_id, source_ips,
-                            source_hostname, user_details):
+def create_user_credentials(global_id, storage_type, storage_id, space_name,
+                            source_ips, source_hostname, user_details):
     """Creates user credentials for CEPH storage based on provided user data.
     Sample output:
     {
