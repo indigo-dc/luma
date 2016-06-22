@@ -21,6 +21,32 @@ LUMA is written using [Flask](http://flask.pocoo.org/) framework and uses
 credentials.
 
 ## Luma Usage Guide
+
+### Pairing generator with storage type or id.
+
+LUMA requires that generator implementation must be paired with storage id or 
+type. This is achieved by entry in generators_mapping. Using this pairings 
+LUMA will try to choose proper generator for given request. In request user 
+may provide storage_id, storage_type or both. When only storage_id is provided 
+LUMA will try to find its storage_type in storage id to type mapping. Now LUMA 
+will try to use storage_id (if provided) to find generator, if this fails LUMA 
+will use storage_type to find generator. If no generator is found LUMA will 
+respond with error. To summarize:
+
+1. User provides generators_mapping (storage id/type to generator_id) and 
+optionally storage_id to storage_type mapping.
+
+2. LUMA receives request for mapping with storage_id, storage_type or both.
+
+3. If only storage_id is provided LUMA tries to find its storage_type.
+
+4. LUMA tries to find generator using storage_id.
+
+5. If previous operation fails LUMA uses storage_type to find generator.
+
+6. If both previous operation fails LUMA returns error, if one of operation 
+succeed generator is called.
+
 ### Initialize Database
 
 To init LUMA server database run command:
@@ -106,7 +132,7 @@ def create_user_credentials(global_id, storage_type, storage_id, space_name,
 ```
 
 
-It has to implement functon
+It has to implement function
 
 ```python
 def create_user_credentials(global_id, storage_type, storage_id, space_name, 
