@@ -10,5 +10,9 @@
   {
     "storage_type": "AmazonS3",
     "generator_id": "s3"
+  },
+  {
+    "storage_type": "Swift",
+    "generator_id": "swift"
   }
 ]

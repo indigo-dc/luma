@@ -15,6 +15,7 @@ As of now there are three kinds of generators implemented in LUMA:
 - POSIX
 - Ceph
 - Amazon S3
+- Openstack Swift
 
 LUMA is written using [Flask](http://flask.pocoo.org/) framework and uses 
 [sqlite](https://www.sqlite.org/) backend to store information about user 
@@ -46,6 +47,13 @@ optionally storage_id to storage_type mapping.
 
 6. If both previous operation fails LUMA returns error, if one of operation 
 succeed generator is called.
+
+Generators results for given user_id and storage id/type will be 
+cached in LUMA database.
+
+Additionally LUMA allows to specify static `user(storage_type/id)->credentials` 
+mappings to bypass the generators for specific users. Usage of static 
+mappings is described in detail in "Registering user to credentials" section.
 
 ### Initialize Database
 
@@ -146,9 +154,10 @@ and return user's credentials as a DICT. This DICT must contain:
 | Posix           | uid, gid (optional)      | If gid is omitted oneprovider will try to generate gid based on space name. If this fail gid will be equal to uid. |
 | Ceph            | user_name, user_key      |                                   |
 | Amazon S3       | access_key, secret_key   |                                   |
+| Openstack Swift | user_name, password      | Credentials to Openstack Keystone service |
 
-RuntimeErrors thrown in generators will be caucht by LUMA and it will 
-be converted to a meaningfull error for the user.
+RuntimeErrors thrown in generators will be caught by LUMA and they will 
+be converted to meaningful errors for the user.
 
 In the file `generators.cfg` user can specify configuration of the generator. 
 Example configuration for POSIX;
@@ -165,7 +174,7 @@ more examples can be found in `generators/generators.cfg.example`.
 ### Registering Generators
 
 #### Pairing generator with storage_id
-The generators need to be paired with specyfic storage by specifying a tuple of 
+The generators need to be paired with specific storage by specifying a tuple of 
 `storage_id` and `generator_id` (storage type may be provided as `storage_id`). 
 Those mappings are located in **generators_mapping.json** and can be passed to 
 luma via command line options. Example file is located in `/example_config` 
@@ -184,6 +193,10 @@ folder.
   {
     "storage_type": "AmazonS3",
     "generator_id": "s3"
+  },
+  {
+    "storage_type": "Swift",
+    "generator_id": "swift"
   }
 ]
 ```
@@ -273,7 +286,7 @@ User details:
 
 * id
 * name
-* connected_accounts - list of open id acconts, each containing:
+* connected_accounts - list of open id accounts, each containing:
 	* provider_id
     * user_id
     * login
@@ -297,7 +310,7 @@ User details:
   }
 }
 ```
-  * CEPH
+  * Ceph
 
 ```json
 {
@@ -308,7 +321,7 @@ User details:
   }
 }
 ```
-  * AMAZON S3
+  * Amazon S3
 
 ```json
 {
@@ -316,6 +329,18 @@ User details:
   "credentials": {
       "user_name": "USER",
       "user_key": "KEY"
+  }
+}
+```
+
+  * Openstack Swift
+
+```json
+{
+  "status": "success",
+  "credentials": {
+      "user_name": "USER",
+      "password": "PASSWORD"
   }
 }
 ```
@@ -356,9 +381,10 @@ Every release of LUMA is published as a docker image. Here are few example
 commands how to use it:
 
 ```shell
-docker run -it onedata/luma:VFS-2019
+docker run -it onedata/luma:VFS-2177
 
 curl --get -d global_id=1 -d storage_type=DirectIO -d space_name=posix -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
 curl --get -d global_id=0 -d storage_type=Ceph -d space_name=ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
 curl --get -d global_id=1 -d storage_type=AmazonS3 -d space_name=s3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+curl --get -d global_id=1 -d storage_type=Swift -d space_name=swift -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
 ```
