@@ -1,3 +1,11 @@
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Contains flask application definition.
+"""
+
 import os
 
 from flask import Flask

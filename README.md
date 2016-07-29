@@ -51,7 +51,7 @@ succeed generator is called.
 Generators results for given user_id and storage id/type will be 
 cached in LUMA database.
 
-Additionally LUMA allows to specify static `user(storage_type/id)->credentials` 
+Additionally LUMA allows to specify static `user(storageType/storageId)->credentials` 
 mappings to bypass the generators for specific users. Usage of static 
 mappings is described in detail in "Registering user to credentials" section.
 
@@ -110,51 +110,56 @@ import hashlib
 import ConfigParser
 import os
 
+from luma.credentials import PosixCredentials
+
 config = ConfigParser.RawConfigParser()
 config.read(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'generators.cfg'))
 
-LowestUID = config.getint('posix', 'lowest_uid')
-HighestUID = config.getint('posix', 'highest_uid')
+LOWEST_UID = config.getint('posix', 'lowest_uid')
+HIGHEST_UID = config.getint('posix', 'highest_uid')
 
 
 def gen_storage_id(id):
     m = hashlib.md5()
     m.update(id)
-    return LowestUID + int(m.hexdigest(), 16) % HighestUID
+    return LOWEST_UID + int(m.hexdigest(), 16) % HIGHEST_UID
 
 
-def create_user_credentials(global_id, storage_type, storage_id, space_name,
-                            source_ips, source_hostname, user_details):
+def create_user_credentials(storage_type, storage_id, space_name, client_ip,
+                            user_details):
     """Creates user credentials for POSIX storage based on provided user data.
-    Sample output:
-    {
-        "uid": 31415,
-        "gid": 31415
-    }
     """
-    if global_id == "0":
-        return {'uid': 0, 'gid': 0}
+    user_id = user_details["id"]
+    if user_id == "0":
+        return PosixCredentials(0, 0)
 
-    return {'uid': gen_storage_id(global_id), 'gid': gen_storage_id(global_id)}
+    uid = gid = gen_storage_id(user_id)
+    return PosixCredentials(uid, gid)
 ```
 
 
 It has to implement function
-
 ```python
-def create_user_credentials(global_id, storage_type, storage_id, space_name, 
-                            source_ips, source_hostname, user_details)
+def create_user_credentials(storage_type, storage_id, space_name, client_ip, 
+                            user_details):
 ```
 
-and return user's credentials as a DICT. This DICT must contain:
+and return user's credentials as oneof:
+
+- PosixCredentials
+- S3Credentials
+- CephCredentials
+- SwiftCredentials
+  
+Credentials params description:
 
 | Storage type    | Params                   | Note                              |
 |:----------------|:-------------------------|:----------------------------------|
 | Posix           | uid, gid (optional)      | If gid is omitted oneprovider will try to generate gid based on space name. If this fail gid will be equal to uid. |
 | Ceph            | user_name, user_key      |                                   |
 | Amazon S3       | access_key, secret_key   |                                   |
-| Openstack Swift | user_name, password      | Credentials to Openstack Keystone service |
+| Openstack Swift | user_name, password      | Credentials to Openstack Keystone service. |
 
 RuntimeErrors thrown in generators will be caught by LUMA and they will 
 be converted to meaningful errors for the user.
@@ -175,7 +180,7 @@ more examples can be found in `generators/generators.cfg.example`.
 
 #### Pairing generator with storage_id
 The generators need to be paired with specific storage by specifying a tuple of 
-`storage_id` and `generator_id` (storage type may be provided as `storage_id`). 
+`storageId` (or `storageType`) and `generatorId`. 
 Those mappings are located in **generators_mapping.json** and can be passed to 
 luma via command line options. Example file is located in `/example_config` 
 folder.
@@ -183,38 +188,38 @@ folder.
 ```json
 [
   {
-    "storage_id": "Ceph",
-    "generator_id": "ceph"
+    "storageType": "Ceph",
+    "generatorId": "ceph"
   },
   {
-    "storage_type": "DirectIO",
-    "generator_id": "posix"
+    "storageType": "Posix",
+    "generatorId": "posix"
   },
   {
-    "storage_type": "AmazonS3",
-    "generator_id": "s3"
+    "storageType": "S3",
+    "generatorId": "s3"
   },
   {
-    "storage_type": "Swift",
-    "generator_id": "swift"
+    "storageType": "Swift",
+    "generatorId": "swift"
   }
 ]
 ```
 
 #### Registering id to type mapping
-Additionally, one can specify a pairing of `storage_id` and `storage_type`. 
-If LUMA fails to use a generator for a specific `storage_id` it will then 
-try to find one matching `storage_type`.
+Additionally, one can specify a pairing of `storageId` and `storageType`. 
+If LUMA fails to use a generator for a specific `storageId` it will then 
+try to find one matching `storageType`.
 
 ```json
 [
   {
-    "storage_id" : "id",
-    "storage_type": "type"
+    "storageId" : "id",
+    "storageType": "type"
   },
   {
-    "storage_id" : "id2",
-    "storage_type": "type2"
+    "storageId" : "id2",
+    "storageType": "type2"
   }
 ]
 
@@ -222,23 +227,26 @@ try to find one matching `storage_type`.
 
 #### Registering user to credentials
 Sometimes one might need to bypass the generators for specific users. 
-LUMA allows to specify static `user(storage_type/id)->credentials` mappings:
+LUMA allows to specify static `user(storageType/storageId)->credentials` 
+mappings:
 
 ```json
 [
   {
-    "global_id": "id",
-    "storage_id": "storage_id",
-    "posix": {
+    "userId": "id",
+    "storageId": "storage_id",
+    "credentials": {
+      "type": "Posix"  
       "uid" : 1
     }
   },
   {
-    "global_id": "id2",
-    "storage_id": "storage_id2",
+    "userId": "id2",
+    "storageId": "storage_id2",
     "credentials": {
-      "access_key": "ACCESS_KEY",
-      "secret_key": "SECRET_KEY"
+      "type": "S3"  
+      "accessKey": "ACCESS_KEY",
+      "secretKey": "SECRET_KEY"
     }
   }
 ]
@@ -251,123 +259,14 @@ LUMA configuration file allows you to specify:
 DATABASE = 'luma_database.db' # db path
 HOST = '0.0.0.0' # the hostname to listen on. Set this to '0.0.0.0' to have the server available externally
 PORT = 5000 # the port of the webserver. Defaults to 5000
+API_KEY = 'example_api_key' # api key that must match api key from oneprovider to perform request
 ```
 
 and any option described in Flask [documentation](http://flask.pocoo.org/docs/0.10/config/#builtin-configuration-values)
 
 ## LUMA API
 
-### Get User Credentials
-
-
-Returns json with user credentials to storage. Use `GET` method.
-
-#### URL
-
-```shell
- /get_user_credentials
-```
-
-#### URL Params
-
-| Param           | Description                                                  |
-|:----------------|:-------------------------------------------------------------|
-| global_id       | user global id                                               |
-| storage_type    | storage type e.g. `Ceph`                                     |
-| storage_id      | storage id                                                   |
-| space_name      | space name                                                   |
-| source_ips      | IPs list of provider performing query as string encoded JSON |
-| source_hostname | hostname of provider performing query                        |
-| user_details    | detail information of user as string encoded JSON            |
-
-**NOTE:** One of `storage_id`, `storage_type` may be omitted in request.
-
-User details:
-
-* id
-* name
-* connected_accounts - list of open id accounts, each containing:
-	* provider_id
-    * user_id
-    * login
-    * name
-    * email_list
-* alias
-* email_list
-
-### Success Response:
-
-* **Code:** 200 OK <br />
-  **Content:**
-  * POSIX
-
-```json
-{
-  "status": "success",
-  "credentials": {
-      "uid": 31415,
-      "gid": 31415
-  }
-}
-```
-  * Ceph
-
-```json
-{
-  "status": "success",
-  "credentials": {
-      "access_key": "ACCESS_KEY",
-      "secret_key": "SECRET_KEY"
-  }
-}
-```
-  * Amazon S3
-
-```json
-{
-  "status": "success",
-  "credentials": {
-      "user_name": "USER",
-      "user_key": "KEY"
-  }
-}
-```
-
-  * Openstack Swift
-
-```json
-{
-  "status": "success",
-  "credentials": {
-      "user_name": "USER",
-      "password": "PASSWORD"
-  }
-}
-```
-
-### Error Response:
-
-* **Code:** 422 Unprocessable Entity <br />
-  **Content:** 
-  
-```json
-{ 
-    "status": "error", 
-    "message": "Missing parameter global_id" 
-}
-```
-
-  OR
-
-* **Code:** 500 Internal Server Error <br />
-  **Content:** 
-  
-```json
-{ 
-    "status": "error", 
-    "message": "MESSAGE" 
-}
-```
+LUMA API detailed description can be found [here](https://beta.onedata.org/docs/doc/advanced/rest/index.html).
 
 ## LUMA in Onedata
 Used in [Onedata](onedata.org), LUMA allows to map Onedata user credentials 
@@ -381,10 +280,12 @@ Every release of LUMA is published as a docker image. Here are few example
 commands how to use it:
 
 ```shell
-docker run -it onedata/luma:VFS-2177
+docker run -it onedata/luma:VFS-2336
 
-curl --get -d global_id=1 -d storage_type=DirectIO -d space_name=posix -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
-curl --get -d global_id=0 -d storage_type=Ceph -d space_name=ceph -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
-curl --get -d global_id=1 -d storage_type=AmazonS3 -d space_name=s3 -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
-curl --get -d global_id=1 -d storage_type=Swift -d space_name=swift -d source_hostname=hostname -d source_ips=[] -d user_details={}  <docker_ip>:5000/get_user_credentials
+DOCKER_IP=<docker_ip>
+
+curl -X POST -H "X-Auth-Token: example_api_key" -H "Content-Type: application/json" -d '{"spaceName":"spaceName","storageType":"Posix","userDetails":{"alias":"user.one","connectedAccounts":[],"emailList":[],"id":"1","name":"user1"}}' $DOCKER_IP:5000/map_user_credentials
+curl -X POST -H "X-Auth-Token: example_api_key" -H "Content-Type: application/json" -d '{"spaceName":"spaceName","storageType":"Ceph","userDetails":{"alias":"user.one","connectedAccounts":[],"emailList":[],"id":"0","name":"user1"}}' $DOCKER_IP:5000/map_user_credentials
+curl -X POST -H "X-Auth-Token: example_api_key" -H "Content-Type: application/json" -d '{"spaceName":"spaceName","storageType":"S3","userDetails":{"alias":"user.one","connectedAccounts":[],"emailList":[],"id":"1","name":"user1"}}' $DOCKER_IP:5000/map_user_credentials
+curl -X POST -H "X-Auth-Token: example_api_key" -H "Content-Type: application/json" -d '{"spaceName":"spaceName","storageType":"Swift","userDetails":{"alias":"user.one","connectedAccounts":[],"emailList":[],"id":"1","name":"user1"}}' $DOCKER_IP:5000/map_user_credentials
 ```

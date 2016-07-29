@@ -1,3 +1,11 @@
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Class responsible for loading generators.
+"""
+
 import imp
 import os
 
