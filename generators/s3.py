@@ -1,5 +1,15 @@
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Example S3 credentials generator.
+"""
+
 import ConfigParser
 import os
+
+from luma.credentials import S3Credentials
 
 config = ConfigParser.RawConfigParser()
 config.read(
@@ -9,16 +19,8 @@ ACCESS_KEY = config.get('s3', 'access_key')
 SECRET_KEY = config.get('s3', 'secret_key')
 
 
-def create_user_credentials(global_id, storage_type, storage_id, space_name,
-                            source_ips, source_hostname, user_details):
+def create_user_credentials(storage_type, storage_id, space_name, client_ip,
+                            user_details):
     """Creates user credentials for S3 storage based on provided user data.
-    Sample output:
-    {
-        "access_key": "ACCESS_KEY",
-        "secret_key": "SECRET_KEY"
-    }
     """
-    return {
-        'access_key': ACCESS_KEY,
-        'secret_key': SECRET_KEY
-    }
+    return S3Credentials(ACCESS_KEY, SECRET_KEY)

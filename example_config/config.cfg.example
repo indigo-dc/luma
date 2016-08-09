@@ -1,2 +1,3 @@
 DATABASE = 'luma_database.db'
 HOST = '0.0.0.0'
+API_KEY = 'example_api_key'

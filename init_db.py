@@ -1,4 +1,12 @@
 #!/usr/bin/env python2
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Allows to initialize empty luma database.
+"""
+
 import argparse
 import os
 

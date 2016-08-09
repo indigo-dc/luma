@@ -1,3 +1,11 @@
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Helper functions to load config from files.
+"""
+
 from flask import json
 from app import db
 from model import StorageIdToTypeMapping, GeneratorsMapping, \
@@ -15,8 +23,8 @@ def load_storage_id_to_type_mapping(app, storage_id_to_type_file):
                     'Invalid file format, should contain list of id to type mapping')
 
             for entry in data:
-                mapping = StorageIdToTypeMapping(entry['storage_id'],
-                                                 entry['storage_type'])
+                mapping = StorageIdToTypeMapping(entry['storageId'],
+                                                 entry['storageType'])
                 db.session.merge(mapping)
             db.session.commit()
 
@@ -31,18 +39,18 @@ def load_generators_mapping(app, plugins, generators_file):
                     'Invalid file format, should contain list of generators mapping')
 
             for entry in data:
-                if 'storage_id' in entry:
-                    storage_id = entry['storage_id']
-                elif 'storage_type' in entry:
-                    storage_id = entry['storage_type']
+                if 'storageId' in entry:
+                    storage_id = entry['storageId']
+                elif 'storageType' in entry:
+                    storage_id = entry['storageType']
                 else:
                     raise RuntimeError(
-                        'Generators mapping must contain storage_id or storage_type')
+                        'Generators mapping must contain storageId or storageType')
 
-                if entry['generator_id'] not in plugins.get_available_plugins():
+                if entry['generatorId'] not in plugins.get_available_plugins():
                     raise RuntimeError('Generator {} does not exists'.format(
-                        entry['generator_id']))
-                mapping = GeneratorsMapping(storage_id, entry['generator_id'])
+                        entry['generatorId']))
+                mapping = GeneratorsMapping(storage_id, entry['generatorId'])
                 db.session.merge(mapping)
             db.session.commit()
 
@@ -58,8 +66,8 @@ def load_user_credentials_mapping(app, user_credentials_file):
                     'Invalid file format, should contain list of credentials')
 
             for entry in data:
-                mapping = UserCredentialsMapping(entry['global_id'],
-                                                 entry['storage_id'],
+                mapping = UserCredentialsMapping(entry['userId'],
+                                                 entry['storageId'],
                                                  json.dumps(
                                                      entry['credentials']))
                 db.session.merge(mapping)
