@@ -1,4 +1,12 @@
 #!/usr/bin/env python2
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Contains request processing logic. Allows to start luma server.
+"""
+
 import argparse
 import os
 
@@ -48,50 +56,52 @@ app = create_app(os.path.join(os.getcwd(), args.config))
 plugins = PluginsLoader()
 
 
-def error_message(code, message):
+def error_message(code, error_type, message):
     """Creates response with provided code and error JSON response in format:
     {
-        "status": "error",
-        "message": "message"
+        "error": "error",
+        "errorDescription": "errorDescription"
     }
     """
-    response = json.jsonify(status='error', message=message)
+    response = json.jsonify(error=error_type, errorDescription=message)
     response.status_code = code
     return response
 
 
 def missing_param(param_name):
     """Creates error response with default message for missing parameter"""
-    return error_message(422, 'Missing parameter: {0}'.format(param_name))
+    return error_message(400, 'missing_param',
+                         'Missing parameter: {0}'.format(param_name))
 
 
-@app.route("/get_user_credentials", methods=['GET'])
-def get_user_credentials():
+@app.route("/map_user_credentials", methods=['POST'])
+def map_user_credentials():
     """Handles user credentials mapping request. More detailed
     description in README.
     """
-    global_id = request.values.get('global_id')
-    if not global_id:
-        return missing_param('global_id')
+    if app.config['API_KEY'] != request.headers['X-Auth-Token']:
+        return error_message(403, 'invalid_token', 'Invalid API token')
 
-    storage_id = request.values.get('storage_id')
-    storage_type = request.values.get('storage_type')
+    request_data = request.get_json()
+
+    storage_id = request_data.get('storageId')
+    storage_type = request_data.get('storageType')
     if not storage_id and not storage_type:
-        return missing_param('storage_id or storage_type')
+        return missing_param('storageId or storageType')
 
-    source_ips = request.values.get('source_ips')
-    if not source_ips:
-        return missing_param('source_ips')
-    source_ips = json.loads(source_ips)
+    space_name = request_data.get('spaceName')
+    if not space_name:
+        return missing_param('spaceName')
 
-    source_hostname = request.values.get('source_hostname')
-    if not source_hostname:
-        return missing_param('source_hostname')
-
-    user_details = request.values.get('user_details')
+    user_details = request_data.get('userDetails')
     if not user_details:
-        return missing_param('user_details')
-    user_details = json.loads(user_details)
+        return missing_param('userDetails')
+
+    user_id = user_details["id"]
+
+    # If nginx is used as proxy client address is stored under
+    # HTTP_X_FORWARDED_FOR. Change this accordingly to your proxy if needed.
+    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
 
     if storage_id and not storage_type:
         id_to_type = StorageIdToTypeMapping.query.filter_by(
@@ -100,10 +110,10 @@ def get_user_credentials():
             storage_type = id_to_type.storage_type
 
     credentials_mapping = UserCredentialsMapping.query.filter_by(
-        global_id=global_id, storage_id=storage_id).first()
+        user_id=user_id, storage_id=storage_id).first()
     if not credentials_mapping and storage_type:
         credentials_mapping = UserCredentialsMapping.query.filter_by(
-            global_id=global_id,
+            user_id=user_id,
             storage_id=storage_type).first()
 
     if not credentials_mapping:
@@ -112,21 +122,22 @@ def get_user_credentials():
         if not generator_mapping and storage_type:
             generator_mapping = GeneratorsMapping.query.filter_by(
                 storage_id=storage_type).first()
+
         if not generator_mapping:
-            return error_message \
-                (422, 'Generator not defined for given storage id/type')
+            return error_message(404, 'unknown_generator',
+                                 'Generator not defined for given storageId/Type')
         try:
             generator = plugins.get_plugin(generator_mapping.generator_id)
-            credentials = generator.create_user_credentials(global_id,
-                                                            storage_type,
+            credentials = generator.create_user_credentials(storage_type,
                                                             storage_id,
-                                                            source_ips,
-                                                            source_hostname,
+                                                            space_name,
+                                                            client_ip,
                                                             user_details)
         except Exception as e:
-            return error_message(500, str(e))
+            return error_message(500, 'internal_server_error', str(e))
 
-        credentials_mapping = UserCredentialsMapping(global_id,
+        credentials = credentials.to_dict()
+        credentials_mapping = UserCredentialsMapping(user_id,
                                                      storage_id or storage_type,
                                                      json.dumps(credentials))
         db.session.add(credentials_mapping)
@@ -134,7 +145,7 @@ def get_user_credentials():
     else:
         credentials = json.loads(credentials_mapping.credentials)
 
-    return json.jsonify(status='success', data=credentials)
+    return json.jsonify(credentials)
 
 
 if args.credentials_mapping_file:

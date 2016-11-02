@@ -3,24 +3,24 @@
 Copyright (C) 2016 ACK CYFRONET AGH
 This software is released under the MIT license cited in 'LICENSE.txt'
 
-Example S3 credentials generator.
+Example Swift credentials generator.
 """
 
 import ConfigParser
 import os
 
-from luma.credentials import S3Credentials
+from luma.credentials import SwiftCredentials
 
 config = ConfigParser.RawConfigParser()
 config.read(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'generators.cfg'))
 
-ACCESS_KEY = config.get('s3', 'access_key')
-SECRET_KEY = config.get('s3', 'secret_key')
+USER_NAME = config.get('swift', 'user_name')
+PASSWORD = config.get('swift', 'password')
 
 
 def create_user_credentials(storage_type, storage_id, space_name, client_ip,
                             user_details):
-    """Creates user credentials for S3 storage based on provided user data.
+    """Creates user credentials for Swift storage based on provided user data.
     """
-    return S3Credentials(ACCESS_KEY, SECRET_KEY)
+    return SwiftCredentials(USER_NAME, PASSWORD)

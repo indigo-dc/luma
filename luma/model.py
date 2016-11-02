@@ -1,21 +1,29 @@
+# coding=utf-8
+"""Author: Michal Wrona
+Copyright (C) 2016 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+
+Contains LUMA database model classes.
+"""
+
 from app import db
 
 
 class UserCredentialsMapping(db.Model):
-    """Class represents mapping: (global_id, storage_id) -> credentials.
+    """Class represents mapping: (user_id, storage_id) -> credentials.
     Storage type may be provided as id when storage id is not available.
     """
-    global_id = db.Column(db.String, primary_key=True)
+    user_id = db.Column(db.String, primary_key=True)
     storage_id = db.Column(db.String, primary_key=True)
     credentials = db.Column(db.String)
 
-    def __init__(self, global_id, storage_id, credentials):
-        self.global_id = global_id
+    def __init__(self, user_id, storage_id, credentials):
+        self.user_id = user_id
         self.storage_id = storage_id
         self.credentials = credentials
 
     def __repr__(self):
-        return '<UserCredentialsMapping {0} {1} {2}>'.format(self.global_id,
+        return '<UserCredentialsMapping {0} {1} {2}>'.format(self.user_id,
                                                              self.storage_id,
                                                              self.credentials)
 
