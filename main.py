@@ -89,9 +89,9 @@ def map_user_credentials():
     if not storage_id and not storage_type:
         return missing_param('storageId or storageType')
 
-    space_name = request_data.get('spaceName')
-    if not space_name:
-        return missing_param('spaceName')
+    space_id = request_data.get('spaceId')
+    if not space_id:
+        return missing_param('spaceId')
 
     user_details = request_data.get('userDetails')
     if not user_details:
@@ -130,7 +130,7 @@ def map_user_credentials():
             generator = plugins.get_plugin(generator_mapping.generator_id)
             credentials = generator.create_user_credentials(storage_type,
                                                             storage_id,
-                                                            space_name,
+                                                            space_id,
                                                             client_ip,
                                                             user_details)
         except Exception as e:

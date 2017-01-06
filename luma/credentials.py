@@ -20,12 +20,10 @@ class Credentials:
 class PosixCredentials(Credentials):
     """Class representing users Posix storage credentials"""
 
-    def __init__(self, uid, gid=None):
+    def __init__(self, uid, gid):
         Credentials.__init__(self)
-        self.params['type'] = 'Posix'
-        self.params['uid'] = uid
-        if gid:
-            self.params['gid'] = gid
+        self.params['uid'] = str(uid)
+        self.params['gid'] = str(gid)
 
 
 class S3Credentials(Credentials):
@@ -33,7 +31,6 @@ class S3Credentials(Credentials):
 
     def __init__(self, access_key, secret_key):
         Credentials.__init__(self)
-        self.params['type'] = 'S3'
         self.params['accessKey'] = access_key
         self.params['secretKey'] = secret_key
 
@@ -41,18 +38,16 @@ class S3Credentials(Credentials):
 class CephCredentials(Credentials):
     """Class representing users Ceph storage credentials"""
 
-    def __init__(self, user_name, user_key):
+    def __init__(self, username, key):
         Credentials.__init__(self)
-        self.params['type'] = 'Ceph'
-        self.params['userName'] = user_name
-        self.params['userKey'] = user_key
+        self.params['username'] = username
+        self.params['key'] = key
 
 
 class SwiftCredentials(Credentials):
     """Class representing users Swift storage credentials"""
 
-    def __init__(self, user_name, password):
+    def __init__(self, username, password):
         Credentials.__init__(self)
-        self.params['type'] = 'Swift'
-        self.params['userName'] = user_name
+        self.params['username'] = username
         self.params['password'] = password

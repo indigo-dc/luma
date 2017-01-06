@@ -15,12 +15,16 @@ config = ConfigParser.RawConfigParser()
 config.read(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'generators.cfg'))
 
-USER_NAME = config.get('swift', 'user_name')
-PASSWORD = config.get('swift', 'password')
+USERNAME = 'swift'
+PASSWORD = 'swift'
+
+if config.has_section('swift'):
+    USERNAME = config.get('swift', 'username')
+    PASSWORD = config.get('swift', 'password')
 
 
-def create_user_credentials(storage_type, storage_id, space_name, client_ip,
+def create_user_credentials(storage_type, storage_id, space_id, client_ip,
                             user_details):
     """Creates user credentials for Swift storage based on provided user data.
     """
-    return SwiftCredentials(USER_NAME, PASSWORD)
+    return SwiftCredentials(USERNAME, PASSWORD)

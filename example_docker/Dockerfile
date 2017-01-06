@@ -1,4 +1,4 @@
-FROM ubuntu:15.10
+FROM ubuntu:16.04
 MAINTAINER Michal Wrona <"michal.wrona.4@gmail.com">
 
 # Get the image up to date
@@ -23,4 +23,4 @@ ADD generators.cfg /root/luma/generators
 
 EXPOSE 5000
 
-CMD /root/luma/run_luma.sh
+ENTRYPOINT ["/root/luma/run_luma.sh"]

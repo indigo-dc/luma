@@ -16,17 +16,21 @@ config = ConfigParser.RawConfigParser()
 config.read(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), 'generators.cfg'))
 
-LOWEST_UID = config.getint('posix', 'lowest_uid')
-HIGHEST_UID = config.getint('posix', 'highest_uid')
+LOWEST_UID = 1000
+HIGHEST_UID = 65536
+
+if config.has_section('posix'):
+    LOWEST_UID = config.getint('posix', 'lowest_uid')
+    HIGHEST_UID = config.getint('posix', 'highest_uid')
 
 
 def gen_storage_id(id):
     m = hashlib.md5()
     m.update(id)
-    return LOWEST_UID + int(m.hexdigest(), 16) % HIGHEST_UID
+    return LOWEST_UID + int(m.hexdigest(), 16) % (HIGHEST_UID - LOWEST_UID)
 
 
-def create_user_credentials(storage_type, storage_id, space_name, client_ip,
+def create_user_credentials(storage_type, storage_id, space_id, client_ip,
                             user_details):
     """Creates user credentials for POSIX storage based on provided user data.
     """

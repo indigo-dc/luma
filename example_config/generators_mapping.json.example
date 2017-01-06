@@ -1,18 +1,18 @@
 [
   {
-    "storageType": "Ceph",
+    "storageType": "ceph",
     "generatorId": "ceph"
   },
   {
-    "storageType": "Posix",
+    "storageType": "posix",
     "generatorId": "posix"
   },
   {
-    "storageType": "S3",
+    "storageType": "s3",
     "generatorId": "s3"
   },
   {
-    "storageType": "Swift",
+    "storageType": "swift",
     "generatorId": "swift"
   }
 ]
