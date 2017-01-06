@@ -16,12 +16,13 @@ default_config = {
         "DEBUG": "True",
         "DATABASE": "'luma_database.db'",
         "HOST": "'0.0.0.0'",
+        "API_KEY": "'example_api_key'"
     },
     "generators_config": {
         "ceph": {
-            "user": "client.admin",
+            "username": "client.admin",
             "key": "key",
-            "mon_host": "",
+            "monitor_hostname": "",
             "pool_name": "onedata"
         },
         "s3": {
@@ -31,20 +32,28 @@ default_config = {
         "posix": {
             "lowest_uid": 1000,
             "highest_uid": 65536
+        },
+        "swift": {
+            "username": "swift",
+            "password": "swift"
         }
     },
     "generators_mapping": [
         {
-            "storage_id": "Ceph",
-            "generator_id": "ceph"
+            "storageType": "ceph",
+            "generatorId": "ceph"
         },
         {
-            "storage_type": "DirectIO",
-            "generator_id": "posix"
+            "storageType": "posix",
+            "generatorId": "posix"
         },
         {
-            "storage_type": "AmazonS3",
-            "generator_id": "s3"
+            "storageType": "s3",
+            "generatorId": "s3"
+        },
+        {
+            "storageType": "swift",
+            "generatorId": "swift"
         }
     ],
     "storages_mapping": [],
@@ -110,9 +119,11 @@ echo "{4}" > /root/bin/generators/generators.cfg
         tty=True,
         workdir='/root/bin',
         volumes=volumes,
-        run_params=["--privileged"],
-        command=command, output=True,
-        name=hostname, hostname=hostname)
+        privileged=True,
+        command=command,
+        output=True,
+        name=hostname,
+        hostname=hostname)
 
     settings = docker.inspect(container)
     ip = settings['NetworkSettings']['IPAddress']
