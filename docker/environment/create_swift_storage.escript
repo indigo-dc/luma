@@ -3,20 +3,20 @@
 
 -export([main/1]).
 
-main([Cookie, Node, Name, Hostname, Scheme, BucketName, AccessKey, SecretKey,
+main([Cookie, Node, Name, AuthUrl, ContainerName, TenantName, Username, Password,
     Insecure]) ->
 
     erlang:set_cookie(node(), list_to_atom(Cookie)),
     NodeAtom = list_to_atom(Node),
 
-    UserCtx = safe_call(NodeAtom, helper, new_s3_user_ctx, [
-        list_to_binary(AccessKey),
-        list_to_binary(SecretKey)
+    UserCtx = safe_call(NodeAtom, helper, new_swift_user_ctx, [
+        list_to_binary(Username),
+        list_to_binary(Password)
     ]),
-    Helper = safe_call(NodeAtom, helper, new_s3_helper, [
-        list_to_binary(Hostname),
-        list_to_binary(BucketName),
-        Scheme =:= "https",
+    Helper = safe_call(NodeAtom, helper, new_swift_helper, [
+        list_to_binary(AuthUrl),
+        list_to_binary(ContainerName),
+        list_to_binary(TenantName),
         #{},
         UserCtx,
         list_to_atom(Insecure)
