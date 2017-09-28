@@ -1,0 +1,842 @@
+---
+swagger: "2.0"
+info:
+  description: "LUMA (Local User MApping) is a REST server that exposes simple REST\
+    \ API that\ncan be used to map users (of any system/kind) to storage specific\
+    \ user\ncredentials (e.g. UID/GID, usernames and passwords or certificates), in\
+    \ the\nprocess authorizing them with the storage.\n\nThis is a specification of\
+    \ LUMA interface, which is understood by\nOneprovider, and for each storage it\
+    \ is best to implement a specific LUMA\nimplementation.\n\nA stub implementation\
+    \ can be generated automatically from this specification\nusing [Swagger Codegen](https://github.com/swagger-api/swagger-codegen)\n\
+    tool in mulitple programming frameworks.\n\nLUMA provides a 2-way mapping interface\
+    \ allowing to:\n * Get user credentials for specific storage based on user federated\
+    \ Id\n * Get user federated Id (in specific IdP) based on storage credentials\n\
+    \nAdditionally, LUMA allows for mapping between user groups on a federated (IdP)\n\
+    level and storage, independently of any specific user.\n\nLUMA supports the same\
+    \ storage systems which are supported by Oneprovider,\nand for each of them a\
+    \ specific must be implemented as typically different\nstorage systems require\
+    \ different types of credentials.\n\nAs of now there are the following supported\
+    \ storage systems, each with it's\nown type of credentials:\n * Posix\n * Ceph\n\
+    \ * Amazon S3\n * Openstack Swift\n * GlusterFS\n\nMore information: [https://github.com/onedata/luma](https://github.com/onedata/luma)\n"
+  version: "17.06.0-beta6"
+  title: "LUMA"
+  contact:
+    name: "Onedata support"
+    url: "https://onedata.org/support"
+    email: "info@onedata.org"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+  x-logo:
+    url: "https://onedata.org/assets/images/api/luma-logo.svg"
+    backgroundColor: "#FFFFFF"
+basePath: "/api/v3/luma"
+tags:
+- name: "Mapping"
+  description: "User and group mapping"
+- name: "Admin"
+  description: "LUMA management endpoint"
+paths:
+  /admin/users:
+    post:
+      tags:
+      - "Admin"
+      summary: "Get user details"
+      description: "Add user details an return LUMA id."
+      operationId: "controllers.default_controller.post_user_details"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "userDetails"
+        description: "Add user details for mapping."
+        required: true
+        schema:
+          $ref: "#/definitions/UserDetails"
+      responses:
+        201:
+          description: "ID of the created LUMA user in the form /admin/users/{lid}\
+            \ is returned in the response `Location` header.\n"
+          headers:
+            Location:
+              type: "string"
+              description: "ID of the LUMA user."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+  /admin/users/{lid}:
+    get:
+      tags:
+      - "Admin"
+      summary: "Get user details"
+      description: "Returns user details known by LUMA."
+      operationId: "controllers.default_controller.get_user_details"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "lid"
+        in: "path"
+        description: "LUMA user Id."
+        required: true
+        type: "integer"
+      responses:
+        200:
+          description: "User details returned successfully."
+          schema:
+            $ref: "#/definitions/UserDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    put:
+      tags:
+      - "Admin"
+      summary: "Add user details"
+      description: "Allows to add user details, based on which credential mapping\
+        \ will be performed. Typically this operation can be left unimplemented, as\
+        \ the mapping logic can should use external, however for simple scenarios\
+        \ this interface can be used to configure the user storage credential mapping.\n"
+      operationId: "controllers.default_controller.add_user_details"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "lid"
+        in: "path"
+        description: "LUMA user Id."
+        required: true
+        type: "integer"
+      - in: "body"
+        name: "userDetails"
+        description: "Add user details for mapping."
+        required: true
+        schema:
+          $ref: "#/definitions/UserDetails"
+      responses:
+        204:
+          description: "User details added successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    delete:
+      tags:
+      - "Admin"
+      summary: "Delete user"
+      description: "Deletes user details from LUMA database.\n"
+      operationId: "controllers.default_controller.delete_user"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "lid"
+        in: "path"
+        description: "LUMA user Id."
+        required: true
+        type: "integer"
+      responses:
+        204:
+          description: "User details removed successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+  /admin/users/{lid}/credentials:
+    put:
+      tags:
+      - "Admin"
+      summary: "Add user credentials"
+      description: "Adds user credentials to specific storage (optional)."
+      operationId: "controllers.default_controller.add_user_credentials"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "lid"
+        in: "path"
+        description: "LUMA user Id."
+        required: true
+        type: "integer"
+      - in: "body"
+        name: "credentials"
+        description: "Add user credentials for specific storage."
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/UserStorageCredentials"
+      responses:
+        204:
+          description: "User credentials added successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+  /admin/{idp}/groups/{gid}:
+    get:
+      tags:
+      - "Admin"
+      summary: "Get group mapping"
+      description: "Returns group details known by LUMA."
+      operationId: "controllers.default_controller.get_group_mapping"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "idp"
+        in: "path"
+        description: "Id of identity provider that was (or will be) used by subject\
+          \ user to log in into onezone, identical to id specified in auth.config\
+          \ / saml.config.\n"
+        required: true
+        type: "string"
+      - name: "gid"
+        in: "path"
+        description: "Id of a group as recognized by a specific identity provider.\n"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GroupDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    put:
+      tags:
+      - "Admin"
+      summary: "Add group mapping"
+      description: "Allows to add group mapping to LUMA.\n"
+      operationId: "controllers.default_controller.add_group_mapping"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "idp"
+        in: "path"
+        description: "Id of identity provider that was (or will be) used by subject\
+          \ user to log in into onezone, identical to id specified in auth.config\
+          \ / saml.config.\n"
+        required: true
+        type: "string"
+      - name: "gid"
+        in: "path"
+        description: "Id of a group as recognized by a specific identity provider.\n"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "groupDetails"
+        description: "Add group details for mapping."
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/GroupDetails"
+      responses:
+        204:
+          description: "Group mapping added successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    delete:
+      tags:
+      - "Admin"
+      summary: "Delete group mapping"
+      description: "Allows to add group mapping to LUMA.\n"
+      operationId: "controllers.default_controller.delete_group_mapping"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "idp"
+        in: "path"
+        description: "Id of identity provider that was (or will be) used by subject\
+          \ user to log in into onezone, identical to id specified in auth.config\
+          \ / saml.config.\n"
+        required: true
+        type: "string"
+      - name: "gid"
+        in: "path"
+        description: "Id of a group as recognized by a specific identity provider.\n"
+        required: true
+        type: "string"
+      responses:
+        204:
+          description: "Group details removed successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+  /map_user_credentials:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Get user credentials"
+      description: "Returns user credentials to storage in JSON format."
+      operationId: "controllers.default_controller.map_user_credentials"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "userCredentialsRequest"
+        description: "User credentials mapping request."
+        required: true
+        schema:
+          $ref: "#/definitions/UserCredentialsRequest"
+      responses:
+        200:
+          description: "User details returned successfully."
+          schema:
+            $ref: "#/definitions/UserStorageCredentials"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
+  /resolve_group:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Resolve group identity"
+      description: "Returns group identity based on storage specific group id."
+      operationId: "controllers.default_controller.resolve_group"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "groupDetails"
+        description: "Group mapping request."
+        required: true
+        schema:
+          $ref: "#/definitions/GroupDetails"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            $ref: "#/definitions/GroupIdentity"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
+  /resolve_user:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Resolve user identity"
+      description: "Returns the user identity from storage credentials."
+      operationId: "controllers.default_controller.resolve_user_identity"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "userStorageCredentials"
+        description: "User storage credentials."
+        required: true
+        schema:
+          $ref: "#/definitions/UserStorageCredentials"
+      responses:
+        200:
+          description: "User identity returned successfully."
+          schema:
+            $ref: "#/definitions/UserIdentity"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "user"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "X-Auth-Token"
+    in: "header"
+definitions:
+  Error:
+    type: "object"
+    required:
+    - "error"
+    - "errorDescription"
+    properties:
+      error:
+        type: "string"
+        description: "Identifier representing internal error code."
+      errorDescription:
+        type: "string"
+        description: "Detailed error message."
+    description: "Generic error model for REST requests."
+    example:
+      error: "invalid_user"
+      errorDescription: "Invalid user ID."
+  UserCredentialsRequest:
+    type: "object"
+    required:
+    - "storageId"
+    - "userDetails"
+    properties:
+      storageId:
+        type: "string"
+        description: "Storage ID (site specific).\n"
+      userDetails:
+        $ref: "#/definitions/UserDetails"
+    description: "User credentials request - provides all necessary information to\
+      \ perform the account mapping.\n"
+    example:
+      storageId: "AKSDHKAJSHD898798ASDKJHA89878ASD"
+      userDetails:
+        id: "ASDJASDNNALSDNALSDNALSDLASD"
+        name: "User One"
+        linkedAccounts:
+        - idp: "github"
+          userId: "ASDJH65675ASD765ASD890ASD6"
+          login: "user1"
+          name: "User One"
+          emailList:
+          - "user.1@example.com"
+          - "user.one@example.com"
+          - "user.i@example.com"
+          groups:
+          - "vo:example-org.eu/tm:members/member"
+          - "vo:example-org.eu/rl:administration/admin"
+        login: "user.one"
+        emailList:
+        - "user.1@example2.com"
+        - "user.one@example2.com"
+        - "user.i@example2.com"
+  LinkedAccount:
+    type: "object"
+    required:
+    - "idp"
+    - "userId"
+    properties:
+      idp:
+        type: "string"
+        description: "ID of the identity provider."
+      userId:
+        type: "string"
+        description: "User ID assigned in Onezone."
+      login:
+        type: "string"
+        description: "User login name."
+      name:
+        type: "string"
+        description: "User full name."
+      emailList:
+        type: "array"
+        description: "The list of user email accounts."
+        items:
+          type: "string"
+      groups:
+        type: "array"
+        description: "A list of strings denoting user group memberships as acquired\
+          \ from the\nidentity provider. Memberships are in Onedata normalized form.\n"
+        items:
+          type: "string"
+      custom:
+        type: "object"
+        description: "This field stores all additional properties that were provided\
+          \ by the IdP for this user.\n"
+        additionalProperties:
+          type: "string"
+    description: "User connected account."
+    example:
+      idp: "github"
+      userId: "ASDJH65675ASD765ASD890ASD6"
+      login: "user1"
+      name: "User One"
+      emailList:
+      - "user.1@example.com"
+      - "user.one@example.com"
+      - "user.i@example.com"
+      groups:
+      - "vo:example-org.eu/tm:members/member"
+      - "vo:example-org.eu/rl:administration/admin"
+      custom:
+      - eduPersonPrincipalName: "user.1@example.com"
+      - userCertificateSubject: "\t/C=PL/O=GRID/O=ACME/CN=User One"
+  UserDetails:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "Onedata user ID."
+      name:
+        type: "string"
+        description: "User name."
+      linkedAccounts:
+        type: "array"
+        description: "The list of user Open ID accounts."
+        items:
+          $ref: "#/definitions/LinkedAccount"
+      login:
+        type: "string"
+        description: "User login."
+      emailList:
+        type: "array"
+        description: "The list of user email accounts."
+        items:
+          type: "string"
+    description: "User details needed for user mapping."
+    example:
+      id: "9743a66f914cc249efca164485a19c5c"
+      name: "user1"
+      linkedAccounts:
+      - idp: "github"
+        userId: "5c28904a-124a-4035-853c-36938143dd4e"
+        login: "user1"
+        name: "User One"
+        emailList:
+        - "user.1@example.com"
+        - "user.one@example.com"
+        - "user.i@example.com"
+      - idp: "EGI"
+        userId: "john@example.com"
+        login: "user1"
+        name: "User One"
+        custom:
+          userCertificateSubject: "/C=PL/O=GRID/O=ACME/CN=John Doe"
+          eduPersonPrincipalName: "john@example.com"
+        emailList:
+        - "user.1@example.com"
+      login: "user.one"
+      emailList:
+      - "user.1@example2.com"
+      - "user.one@example2.com"
+      - "user.i@example2.com"
+  UserIdentity:
+    type: "object"
+    properties:
+      idp:
+        type: "string"
+        description: "Id of identity provider that was (or will be) used by subject\
+          \ user to log in\ninto onezone, identical to id specified in auth.config\
+          \ / saml.config.\nIf the user was created via onepanel, use the value \"\
+          onezone\".\n"
+      userId:
+        type: "string"
+        description: "Id of user as recognized by the identity provider. If the user\
+          \ was created\nvia onepanel, use the userId from onepanel (can be checked\
+          \ using REST).\n"
+    description: "User identity."
+    example:
+      idp: "google"
+      userId: "5484af38-8b5d-464f-bdd1-da9ef801090f"
+  UserStorageCredentials:
+    type: "object"
+    required:
+    - "storageId"
+    - "type"
+    discriminator: "type"
+    properties:
+      type:
+        type: "string"
+        description: "Type of storage."
+        enum:
+        - "posix"
+        - "ceph"
+        - "s3"
+        - "swift"
+        - "glusterfs"
+      storageId:
+        type: "string"
+        description: "Storage Id."
+    description: "Generic storage credentials response type."
+  GroupDetails:
+    type: "object"
+    required:
+    - "storageId"
+    properties:
+      storageId:
+        type: "string"
+        description: "Storage ID (site specific).\n"
+      gid:
+        type: "integer"
+        description: "Type of storage.\n"
+      name:
+        type: "string"
+        description: "Name of the group.\n"
+    description: "Group identity. At least one of `gid` and `name` properties are\
+      \ required.\n"
+    example:
+      storageId: "Assdwe897Dsdjhx9"
+      gid: 1001
+      name: "users"
+  GroupIdentity:
+    type: "object"
+    properties:
+      idp:
+        type: "string"
+        description: "Id of identity provider that was (or will be) used by subject\
+          \ user to log in into onezone, identical to id specified in auth.config\
+          \ / saml.config.\n"
+      groupId:
+        type: "string"
+        description: "Id of a group as recognized by a specific identity provider.\n"
+    description: "Group identity."
+    example:
+      idp: "github"
+      groupId: "5484af38-8b5d-464f-bdd1-da9ef801090f"
+  posix:
+    allOf:
+    - $ref: "#/definitions/UserStorageCredentials"
+    - type: "object"
+      properties:
+        uid:
+          type: "string"
+          description: "POSIX user ID in the local system."
+        gid:
+          type: "string"
+          description: "POSIX user group ID in the local system."
+        name:
+          type: "string"
+          description: "Username for POSIX compatible ACL's."
+      description: "The POSIX storage credentials. The credentials support both basic\
+        \ POSIX identity (i.e. numeric uid/gid properties) as well as named identity\
+        \ for POSIX or NFSv4 ACL's. Depending on the type of storage either uid/gid\
+        \ or username groupname pair can be included. When requesting user identity\
+        \ based on storage credentials, only single field can be included here (e.g.\
+        \ username) for which federated user identity should be returned.\n"
+  s3:
+    allOf:
+    - $ref: "#/definitions/UserStorageCredentials"
+    - type: "object"
+      required:
+      - "accessKey"
+      - "secretKey"
+      properties:
+        accessKey:
+          type: "string"
+          description: "S3 access key for user."
+        secretKey:
+          type: "string"
+          description: "S3 secret key for user."
+      description: "The Amazon S3 storage credentials."
+  ceph:
+    allOf:
+    - $ref: "#/definitions/UserStorageCredentials"
+    - type: "object"
+      required:
+      - "key"
+      - "username"
+      properties:
+        username:
+          type: "string"
+          description: "Ceph user name."
+        key:
+          type: "string"
+          description: "Ceph user key."
+      description: "The Ceph storage credentials."
+  swift:
+    allOf:
+    - $ref: "#/definitions/UserStorageCredentials"
+    - type: "object"
+      required:
+      - "password"
+      - "username"
+      properties:
+        username:
+          type: "string"
+          description: "OpenStack Keystone user name."
+        password:
+          type: "string"
+          description: "OpenStack Keystone user password."
+      description: "The OpenStack Keystone credentials."
+  glusterfs:
+    allOf:
+    - $ref: "#/definitions/UserStorageCredentials"
+    - type: "object"
+      required:
+      - "gid"
+      - "uid"
+      properties:
+        uid:
+          type: "string"
+          description: "POSIX user ID in the GlusterFS server."
+        gid:
+          type: "string"
+          description: "POSIX user group ID in the GlusterFS server."
+        certificate:
+          type: "string"
+          description: "User certificate in PEM format. The value must be formatted\
+            \ properly (including newlines) in PEM format.\n"
+        key:
+          type: "string"
+          description: "User private key for certificate in PEM format."
+        caCertificate:
+          type: "string"
+          description: "The certificate of the CA signing the user certificate. Must\
+            \ include the entire necessary chain of trust, and the GlusterFS server\
+            \ must trust this CA.\n"
+      description: "The GlusterFS storage credentials. For non-TLS connection, `uid`\
+        \ and `gid` properties are sufficient. However, for fully secure connection\
+        \ each user must be also identified by a certificate, which must be returned\
+        \ in this response.\n"
