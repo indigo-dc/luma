@@ -4,8 +4,8 @@ import logging
 from tinydb import TinyDB, where
 
 
-FORMAT = '%(asctime)-15s %(funcName)s %(message)s'
-logging.basicConfig(format=FORMAT)
+LOG_FORMAT = '%(asctime)-15s %(funcName)s %(message)s'
+logging.basicConfig(format=LOG_FORMAT)
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
@@ -70,10 +70,10 @@ def post_user_details(userDetails):
         return 'OK', 201, {'Location': '/admin/users/{}'.format(lid)}
     else:
         return ('UserDetails should have at least one '
-                'of id or linkedAccounts'), 400
+                'of id or connectedAccounts'), 400
 
 
-def add_user_details(lid, userDetails):
+def update_user_details(lid, userDetails):
     details = normalize_user_details(userDetails)
     if details:
         if USERS.update({'userDetails': details}, eids=[lid]):
@@ -84,7 +84,7 @@ def add_user_details(lid, userDetails):
             return 'User Details not found', 404
     else:
         return ('UserDetails should have at least one '
-                'of id or linkedAccounts'), 400
+                'of id or connectedAccounts'), 400
 
 
 def get_user_details(lid):
@@ -129,10 +129,12 @@ def map_user_credentials(userCredentialsRequest):
         user = USERS.get(where('userDetails').any(query))
         if user:
             for cred in user['credentials']:
-                if cred['storageId'] == sid:
+                if cred['id'] == sid:
                     LOG.info('Returning credentials for userCredentialsRequest:'
                              '{}'.format(userCredentialsRequest))
-                    return cred, 200
+                    credentials = {key: val for key, val in cred.items()
+                                   if key not in ('id', 'type')}
+                    return credentials, 200
 
         LOG.warning('Mapping not found for userCredentialsRequest: '
                     '{}'.format(userCredentialsRequest))
@@ -140,7 +142,7 @@ def map_user_credentials(userCredentialsRequest):
 
     else:
         return ('UserDetails should have at least one '
-                'of id or linkedAccounts'), 400
+                'of id or connectedAccounts'), 400
 
 
 def resolve_user_identity(userStorageCredentials):
@@ -166,16 +168,16 @@ def resolve_user_identity(userStorageCredentials):
 
 def normalize_user_details(user_details):
     try:
-        linked_accounts = user_details['linkedAccounts']
+        connected_accounts = user_details['connectedAccounts']
     except KeyError:
-        linked_accounts = []
+        connected_accounts = []
     else:
-        del user_details['linkedAccounts']
+        del user_details['connectedAccounts']
 
     if 'id' in user_details:
         user_details['idp'] = 'onedata'
         user_details['userId'] = user_details['id']
         del user_details['id']
-        linked_accounts.insert(0, user_details)
+        connected_accounts.insert(0, user_details)
 
-    return linked_accounts
+    return connected_accounts

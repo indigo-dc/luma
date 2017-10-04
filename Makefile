@@ -2,7 +2,7 @@
 
 all: image push
 
-TAG			?= v1.0.0
+TAG			?= $(shell git describe --tags --always)
 PREFIX		?= docker.onedata.org
 REPO_NAME	?= luma
 

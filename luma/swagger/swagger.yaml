@@ -122,12 +122,12 @@ paths:
     put:
       tags:
       - "Admin"
-      summary: "Add user details"
-      description: "Allows to add user details, based on which credential mapping\
+      summary: "Update user details"
+      description: "Allows to update user details, based on which credential mapping\
         \ will be performed. Typically this operation can be left unimplemented, as\
         \ the mapping logic can should use external, however for simple scenarios\
         \ this interface can be used to configure the user storage credential mapping.\n"
-      operationId: "controllers.default_controller.add_user_details"
+      operationId: "controllers.default_controller.update_user_details"
       consumes:
       - "application/json"
       parameters:
@@ -555,7 +555,7 @@ definitions:
       userDetails:
         id: "ASDJASDNNALSDNALSDNALSDLASD"
         name: "User One"
-        linkedAccounts:
+        connectedAccounts:
         - idp: "github"
           userId: "ASDJH65675ASD765ASD890ASD6"
           login: "user1"
@@ -572,7 +572,7 @@ definitions:
         - "user.1@example2.com"
         - "user.one@example2.com"
         - "user.i@example2.com"
-  LinkedAccount:
+  ConnectedAccount:
     type: "object"
     required:
     - "idp"
@@ -632,11 +632,11 @@ definitions:
       name:
         type: "string"
         description: "User name."
-      linkedAccounts:
+      connectedAccounts:
         type: "array"
         description: "The list of user Open ID accounts."
         items:
-          $ref: "#/definitions/LinkedAccount"
+          $ref: "#/definitions/ConnectedAccount"
       login:
         type: "string"
         description: "User login."
@@ -649,7 +649,7 @@ definitions:
     example:
       id: "9743a66f914cc249efca164485a19c5c"
       name: "user1"
-      linkedAccounts:
+      connectedAccounts:
       - idp: "github"
         userId: "5c28904a-124a-4035-853c-36938143dd4e"
         login: "user1"
@@ -693,7 +693,7 @@ definitions:
   UserStorageCredentials:
     type: "object"
     required:
-    - "storageId"
+    - "id"
     - "type"
     discriminator: "type"
     properties:
@@ -706,16 +706,16 @@ definitions:
         - "s3"
         - "swift"
         - "glusterfs"
-      storageId:
+      id:
         type: "string"
         description: "Storage Id."
     description: "Generic storage credentials response type."
   GroupDetails:
     type: "object"
     required:
-    - "storageId"
+    - "id"
     properties:
-      storageId:
+      id:
         type: "string"
         description: "Storage ID (site specific).\n"
       gid:
@@ -727,7 +727,7 @@ definitions:
     description: "Group identity. At least one of `gid` and `name` properties are\
       \ required.\n"
     example:
-      storageId: "Assdwe897Dsdjhx9"
+      id: "Assdwe897Dsdjhx9"
       gid: 1001
       name: "users"
   GroupIdentity:
