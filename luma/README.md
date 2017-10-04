@@ -30,3 +30,8 @@ Required python dependencies/libraries:
 
 * ``connexion``
 * ``tinydb``
+
+To keep persistence when using docker image one should mount db file at location:
+```
+/luma/db.json
+```
