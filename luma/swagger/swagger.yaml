@@ -719,7 +719,7 @@ definitions:
         type: "string"
         description: "Storage ID (site specific).\n"
       gid:
-        type: "integer"
+        type: "string"
         description: "Type of storage.\n"
       name:
         type: "string"

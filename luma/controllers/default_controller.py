@@ -179,5 +179,7 @@ def normalize_user_details(user_details):
         user_details['userId'] = user_details['id']
         del user_details['id']
         connected_accounts.insert(0, user_details)
+    elif 'idp' in user_details and 'userId' in user_details:
+        connected_accounts.insert(0, user_details)
 
     return connected_accounts
