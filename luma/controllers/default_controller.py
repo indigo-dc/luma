@@ -16,30 +16,32 @@ USERS = DB.table('users')
 GROUPS = DB.table('groups')
 
 
-def add_group_mapping(idp, gid, groupDetails):
-    LOG.info('Adding group mapping {} for group {} '
-             'of {}'.format(str(groupDetails), gid, idp))
-    GROUPS.remove((where('idp') == idp) & (where('gid') == gid))
-    GROUPS.insert({'idp': idp, 'gid': gid, 'groupDetails': groupDetails})
+def add_group_mapping(idp, groupId, groupDetails):
+    LOG.info('Adding group mapping ({}, {}) -> {}'.format(idp, groupId,
+                                                          str(groupDetails)))
+    GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId))
+    GROUPS.insert({'idp': idp, 'groupId': groupId, 'groupDetails': groupDetails})
     return 'OK', 204
 
 
-def get_group_mapping(idp, gid):
-    group = GROUPS.get((where('idp') == idp) & (where('gid') == gid))
+def get_group_mapping(idp, groupId):
+    group = GROUPS.get((where('idp') == idp) & (where('groupId') == groupId))
     if group:
-        LOG.info('Returning group mapping for group {} of {}'.format(gid, idp))
+        LOG.info('Returning groupDetails for group {} of {}'.format(groupId,
+                                                                    idp))
         return group['groupDetails'], 200
     else:
-        LOG.warning('Group {} of idp {} not found'.format(gid, idp))
+        LOG.warning('Group {} of idp {} not found'.format(groupId, idp))
         return 'Group not found', 404
 
 
-def delete_group_mapping(idp, gid):
-    if GROUPS.remove((where('idp') == idp) & (where('gid') == gid)):
-        LOG.info('Removed group mapping for group {} of {}'.format(gid, idp))
+def delete_group_mapping(idp, groupId):
+    if GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId)):
+        LOG.info('Removed group mapping for group {} of {}'.format(groupId,
+                                                                   idp))
         return 'OK', 204
     else:
-        LOG.warning('Group {} of idp {} not found'.format(gid, idp))
+        LOG.warning('Group {} of idp {} not found'.format(groupId, idp))
         return 'Group not found', 404
 
 
@@ -53,9 +55,9 @@ def resolve_group(groupDetails):
 
     group = GROUPS.get(where('groupDetails').any(query))
     if group:
-        LOG.info('Returning idp and gid for groupDetails: '
+        LOG.info('Returning idp and groupId for groupDetails: '
                  '{}'.format(groupDetails))
-        return {'idp': group['idp'], 'gid': group['gid']}, 200
+        return {'idp': group['idp'], 'groupId': group['groupId']}, 200
     else:
         LOG.warning('Mapping not found for groupDetails: '
                     '{}'.format(groupDetails))

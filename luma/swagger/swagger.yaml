@@ -243,7 +243,7 @@ paths:
       x-onedata-version: 3
       x-tags:
       - tag: "Admin"
-  /admin/{idp}/groups/{gid}:
+  /admin/{idp}/groups/{groupId}:
     get:
       tags:
       - "Admin"
@@ -260,7 +260,7 @@ paths:
           \ / saml.config.\n"
         required: true
         type: "string"
-      - name: "gid"
+      - name: "groupId"
         in: "path"
         description: "Id of a group as recognized by a specific identity provider.\n"
         required: true
@@ -309,7 +309,7 @@ paths:
           \ / saml.config.\n"
         required: true
         type: "string"
-      - name: "gid"
+      - name: "groupId"
         in: "path"
         description: "Id of a group as recognized by a specific identity provider.\n"
         required: true
@@ -358,7 +358,7 @@ paths:
           \ / saml.config.\n"
         required: true
         type: "string"
-      - name: "gid"
+      - name: "groupId"
         in: "path"
         description: "Id of a group as recognized by a specific identity provider.\n"
         required: true
@@ -447,7 +447,7 @@ paths:
           $ref: "#/definitions/GroupDetails"
       responses:
         200:
-          description: "Group details returned successfully."
+          description: "Group identity returned successfully."
           schema:
             $ref: "#/definitions/GroupIdentity"
         400:
@@ -728,7 +728,7 @@ definitions:
       \ required.\n"
     example:
       id: "Assdwe897Dsdjhx9"
-      gid: 1001
+      gid: "1001"
       name: "users"
   GroupIdentity:
     type: "object"
