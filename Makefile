@@ -1,10 +1,23 @@
-DOCKER_REG_NAME     ?= "docker.onedata.org"
-DOCKER_REG_USER     ?= ""
-DOCKER_REG_PASSWORD ?= ""
+.PHONY: docker push
 
-docker:
-	git archive --format=tar --prefix=luma/ --output=example_docker/luma.tar HEAD
-	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
-                    --password $(DOCKER_REG_PASSWORD)  --name luma --publish \
-                    --remove example_docker
-	rm example_docker/luma.tar
+all: image push
+
+TAG			?= $(shell git describe --tags --always)
+PREFIX		?= docker.onedata.org
+REPO_NAME	?= luma
+
+##
+## Docker artifact
+##
+
+image:
+	docker build . -t ${PREFIX}/${REPO_NAME}
+	docker build . -t ${PREFIX}/${REPO_NAME}:${TAG}
+
+push:
+	docker push ${PREFIX}/${REPO_NAME}
+	docker push ${PREFIX}/${REPO_NAME}:${TAG}
+
+
+test:
+	docker run -it --rm ${PREFIX}/${REPO_NAME} python3 -m unittest tests/test_luma.py
