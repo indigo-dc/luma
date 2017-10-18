@@ -129,7 +129,7 @@ def map_user_credentials(userCredentialsRequest):
             query |= cond
 
         user = USERS.get(where('userDetails').any(query))
-        if user:
+        if user and 'credentials' in user:
             for cred in user['credentials']:
                 if cred['id'] == sid:
                     LOG.info('Returning credentials for userCredentialsRequest:'

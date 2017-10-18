@@ -17,3 +17,7 @@ image:
 push:
 	docker push ${PREFIX}/${REPO_NAME}
 	docker push ${PREFIX}/${REPO_NAME}:${TAG}
+
+
+test:
+	docker run -it --rm ${PREFIX}/${REPO_NAME} python3 -m unittest tests/test_luma.py
