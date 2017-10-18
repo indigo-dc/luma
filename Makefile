@@ -3,6 +3,7 @@
 all: image push
 
 TAG			?= $(shell git describe --tags --always)
+VERSION     ?= $(shell echo ${TAG} | tr - .)
 PREFIX		?= docker.onedata.org
 REPO_NAME	?= luma
 
@@ -11,13 +12,11 @@ REPO_NAME	?= luma
 ##
 
 image:
-	docker build . -t ${PREFIX}/${REPO_NAME}
-	docker build . -t ${PREFIX}/${REPO_NAME}:${TAG}
+	docker build . -t ${PREFIX}/${REPO_NAME}:${VERSION}
 
 push:
-	docker push ${PREFIX}/${REPO_NAME}
-	docker push ${PREFIX}/${REPO_NAME}:${TAG}
-
+	docker push ${PREFIX}/${REPO_NAME}:${VERSION}
 
 test:
-	docker run -it --rm ${PREFIX}/${REPO_NAME} python3 -m unittest tests/test_luma.py
+	docker run -it --rm ${PREFIX}/${REPO_NAME}:${VERSION} \
+		python3 -m unittest tests/test_luma.py
