@@ -21,7 +21,7 @@ image:
 	docker build . -t ${PREFIX}/${REPO_NAME}:ID-${HASH}
 
 push:
-	@echo "docker push ${PREFIX}/${REPO_NAME}:ID-${HASH}"
+	docker push ${PREFIX}/${REPO_NAME}:ID-${HASH}
 	$(shell echo "Build report for luma" > luma-docker-build-report.txt)
 	$(shell echo "" >> luma-docker-build-report.txt)
 	$(shell echo "Artifacts:" >> luma-docker-build-report.txt)
@@ -30,13 +30,13 @@ push:
 	$(shell echo "	To get image run:" >> luma-docker-build-report.txt)
 	$(shell echo "		docker pull docker.onedata.org/luma:ID-${HASH}" >> luma-docker-build-report.txt)
 ifneq ($(TICKET),)
-	@echo "docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:VFS-${TICKET}"
-	@echo "docker push ${PREFIX}/${REPO_NAME}:VFS-${TICKET}"
+	docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:VFS-${TICKET}
+	docker push ${PREFIX}/${REPO_NAME}:VFS-${TICKET}
 	$(shell echo "		docker pull docker.onedata.org/luma:VFS-${TICKET}" >> luma-docker-build-report.txt)
 endif
 ifneq ($(RELEASE),)
-	@echo "docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:${RELEASE}"
-	@echo "docker push ${PREFIX}/${REPO_NAME}:${RELEASE}"
+	docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:${RELEASE}
+	docker push ${PREFIX}/${REPO_NAME}:${RELEASE}
 	$(shell echo "		docker pull docker.onedata.org/luma:${RELEASE}" >> luma-docker-build-report.txt)
 endif
 
