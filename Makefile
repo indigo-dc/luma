@@ -18,5 +18,5 @@ push:
 	docker push ${PREFIX}/${REPO_NAME}:${VERSION}
 
 test:
-	docker run -it --rm ${PREFIX}/${REPO_NAME}:${VERSION} \
+	docker run -t --rm ${PREFIX}/${REPO_NAME}:${VERSION} \
 		python3 -m unittest tests/test_luma.py
