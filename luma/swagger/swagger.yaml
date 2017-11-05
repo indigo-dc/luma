@@ -18,7 +18,7 @@ info:
     \ different types of credentials.\n\nAs of now there are the following supported\
     \ storage systems, each with it's\nown type of credentials:\n * Posix\n * Ceph\n\
     \ * Amazon S3\n * Openstack Swift\n * GlusterFS\n\nMore information: [https://github.com/onedata/luma](https://github.com/onedata/luma)\n"
-  version: "17.06.0-beta6"
+  version: "17.06.0-rc6"
   title: "LUMA"
   contact:
     name: "Onedata support"
@@ -41,8 +41,8 @@ paths:
     post:
       tags:
       - "Admin"
-      summary: "Get user details"
-      description: "Add user details an return LUMA id."
+      summary: "Add user details"
+      description: "Add user details and return user LUMA ID."
       operationId: "controllers.default_controller.post_user_details"
       consumes:
       - "application/json"
@@ -124,9 +124,7 @@ paths:
       - "Admin"
       summary: "Update user details"
       description: "Allows to update user details, based on which credential mapping\
-        \ will be performed. Typically this operation can be left unimplemented, as\
-        \ the mapping logic can should use external, however for simple scenarios\
-        \ this interface can be used to configure the user storage credential mapping.\n"
+        \ will be performed.\n"
       operationId: "controllers.default_controller.update_user_details"
       consumes:
       - "application/json"
@@ -165,7 +163,7 @@ paths:
     delete:
       tags:
       - "Admin"
-      summary: "Delete user"
+      summary: "Delete user details"
       description: "Deletes user details from LUMA database.\n"
       operationId: "controllers.default_controller.delete_user"
       consumes:
@@ -540,18 +538,21 @@ definitions:
   UserCredentialsRequest:
     type: "object"
     required:
-    - "storageId"
     - "userDetails"
     properties:
       storageId:
         type: "string"
-        description: "Storage ID (site specific).\n"
+        description: "Storage ID."
+      storageName:
+        type: "string"
+        description: "Administrator defined storage name."
       userDetails:
         $ref: "#/definitions/UserDetails"
     description: "User credentials request - provides all necessary information to\
-      \ perform the account mapping.\n"
+      \ perform the mapping from federated user to storage credentials.\n"
     example:
       storageId: "AKSDHKAJSHD898798ASDKJHA89878ASD"
+      storageName: "NFS"
       userDetails:
         id: "ASDJASDNNALSDNALSDNALSDLASD"
         name: "User One"
@@ -693,7 +694,6 @@ definitions:
   UserStorageCredentials:
     type: "object"
     required:
-    - "id"
     - "type"
     discriminator: "type"
     properties:
@@ -706,9 +706,12 @@ definitions:
         - "s3"
         - "swift"
         - "glusterfs"
-      id:
+      storageId:
         type: "string"
-        description: "Storage Id."
+        description: "Storage Id. Either storageId or storageName are required."
+      storageName:
+        type: "string"
+        description: "Storage name. Either storageId or storageName are required."
     description: "Generic storage credentials response type."
   GroupDetails:
     type: "object"

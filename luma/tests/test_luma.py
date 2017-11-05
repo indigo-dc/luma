@@ -56,28 +56,29 @@ USER_DETAILS_2 = {
 }
 
 POSIX_STORAGE_CREDENTIALS = {
-    "id": "1",
+    "storageId": "1",
     "type": "posix",
     "uid": 1001,
     "gid": 1001
 }
 
 S3_STORAGE_CREDENTIALS = {
-    "id": "2",
+    "storageId": "2",
     "type": "s3",
     "accessKey": "ABCD",
     "secretKey": "1234"
 }
 
 CEPH_STORAGE_CREDENTIALS = {
-    "id": "3",
+    "storageId": "3",
     "type": "ceph",
     "key": "ABCD",
     "username": "user1"
 }
 
 GLUSTERFS_STORAGE_CREDENTIALS = {
-    "id": "4",
+    "storageName": "GlusterFS4",
+    "storageId": "4",
     "type": "glusterfs",
     "uid": 1001,
     "gid": 1001
@@ -158,15 +159,19 @@ class TestLUMA(unittest.TestCase):
 
         # check normal luma
         for credentials in MULTI_STORAGE_CREDENTIALS:
-            storage_id = credentials['id']
+            storage_id = credentials.get('storageId')
+            storage_name = credentials.get('storageName')
             user_id = USER_DETAILS_2['id']
-            r6 = requests.post(URL + '/map_user_credentials',
-                               json={'storageId': storage_id,
-                                     'userDetails': {'id': user_id}})
+            json = {'userDetails': {'id': user_id}}
+            if storage_id != None:
+                json['storageId'] = storage_id
+            if storage_name != None:
+                json['storageName'] = storage_name
+            r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
             awaited_credentials = {key: val
                                    for key, val in credentials.items()
-                                   if key not in ('id', 'type')}
+                                   if key not in ('storageId', 'storageName', 'type')}
             self.assertEqual(r6.json(), awaited_credentials)
 
         # check reverse luma

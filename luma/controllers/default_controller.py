@@ -118,7 +118,8 @@ def add_user_credentials(lid, credentials):
 
 
 def map_user_credentials(userCredentialsRequest):
-    sid = userCredentialsRequest['storageId']
+    sid = userCredentialsRequest.get('storageId')
+    storage_name = userCredentialsRequest.get('storageName')
     user_details = normalize_user_details(userCredentialsRequest['userDetails'])
     if user_details:
         conditions = iter((where('idp') == acc['idp'])
@@ -131,11 +132,12 @@ def map_user_credentials(userCredentialsRequest):
         user = USERS.get(where('userDetails').any(query))
         if user and 'credentials' in user:
             for cred in user['credentials']:
-                if cred['id'] == sid:
+                if (cred.get('storageId') != None and cred.get('storageId') == sid) \
+                  or (cred.get('storageName') != None and cred.get('storageName') == storage_name):
                     LOG.info('Returning credentials for userCredentialsRequest:'
                              '{}'.format(userCredentialsRequest))
                     credentials = {key: val for key, val in cred.items()
-                                   if key not in ('id', 'type')}
+                                   if key not in ('storageId', 'storageName', 'type')}
                     return credentials, 200
 
         LOG.warning('Mapping not found for userCredentialsRequest: '
