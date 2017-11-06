@@ -1,7 +1,7 @@
 import os
 import logging
 
-from tinydb import TinyDB, where
+from tinydb import TinyDB, Query, where
 
 
 LOG_FORMAT = '%(asctime)-15s %(funcName)s %(message)s'
@@ -17,6 +17,16 @@ GROUPS = DB.table('groups')
 
 
 def add_group_mapping(idp, groupId, groupDetails):
+    """
+    [PUT] /admin/{idp}/groups/{groupId}
+
+    Allows to add group mapping to LUMA.
+
+    Args:
+        idp (str): Name of IdP (e.g. onedata, github)
+        groupId (str): Id of the group in 'idp'
+        groupDetails (dict): The mapping between groupId and GID and group name.
+    """
     LOG.info('Adding group mapping ({}, {}) -> {}'.format(idp, groupId,
                                                           str(groupDetails)))
     GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId))
@@ -25,6 +35,15 @@ def add_group_mapping(idp, groupId, groupDetails):
 
 
 def get_group_mapping(idp, groupId):
+    """
+    [GET] /admin/{idp}/groups/{groupId}
+
+    Returns group details known by LUMA.
+
+    Args:
+        idp (str): Name of IdP (e.g. onedata, github)
+        groupId (str): Id of the group in 'idp'
+    """
     group = GROUPS.get((where('idp') == idp) & (where('groupId') == groupId))
     if group:
         LOG.info('Returning groupDetails for group {} of {}'.format(groupId,
@@ -36,6 +55,15 @@ def get_group_mapping(idp, groupId):
 
 
 def delete_group_mapping(idp, groupId):
+    """
+    [DELETE] /admin/{idp}/groups/{groupId}
+
+    Allows to remove group mapping from LUMA.
+
+    Args:
+        idp (str): Name of IdP (e.g. onedata, github)
+        groupId (str): Id of the group in 'idp'
+    """
     if GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId)):
         LOG.info('Removed group mapping for group {} of {}'.format(groupId,
                                                                    idp))
@@ -46,6 +74,14 @@ def delete_group_mapping(idp, groupId):
 
 
 def resolve_group(groupDetails):
+    """
+    [POST] /resolve_group
+
+    Returns group identity based on storage specific group id.
+
+    Args:
+        groupDetails (dict): Group mapping request.
+    """
     conditions = iter(where(attr) == val
                       for attr, val
                       in groupDetails.items())
@@ -65,7 +101,15 @@ def resolve_group(groupDetails):
 
 
 def post_user_details(userDetails):
-    details = normalize_user_details(userDetails)
+    """
+    [POST] /admin/users
+
+    Add user details an return LUMA id.
+
+    Args:
+        userDetails (dict): User details which will be used for mapping.
+    """
+    details = __normalize_user_details(userDetails)
     if details:
         LOG.info('Added userDetails {}'.format(str(userDetails)))
         lid = USERS.insert({'userDetails': details})
@@ -76,7 +120,16 @@ def post_user_details(userDetails):
 
 
 def update_user_details(lid, userDetails):
-    details = normalize_user_details(userDetails)
+    """
+    [PUT] /admin/users/{lid}
+
+    Allows to update user details, based on which credential mapping will be performed.
+
+    Args:
+        lid (str): LUMA user Id.
+        userDetails (dict): User details which will be used for mapping.
+    """
+    details = __normalize_user_details(userDetails)
     if details:
         if USERS.update({'userDetails': details}, eids=[lid]):
             LOG.info('Updated userDetails for /admin/users/{}'.format(lid))
@@ -90,6 +143,14 @@ def update_user_details(lid, userDetails):
 
 
 def get_user_details(lid):
+    """
+    [GET] /admin/users/{lid}
+
+    Returns user details known by LUMA.
+
+    Args:
+        lid (str): LUMA user Id.
+    """
     user = USERS.get(eid=lid)
     if user:
         LOG.info('Returning userDetails of /admin/users/{} '.format(lid))
@@ -100,6 +161,14 @@ def get_user_details(lid):
 
 
 def delete_user(lid):
+    """
+    [DELETE] /admin/users/{lid}
+
+    Deletes user details from LUMA database.
+
+    Args:
+        lid (str): LUMA user Id.
+    """
     if USERS.remove(eids=[lid]):
         LOG.info('Removed /admin/users/{}'.format(lid))
         return 'OK', 204
@@ -109,6 +178,15 @@ def delete_user(lid):
 
 
 def add_user_credentials(lid, credentials):
+    """
+    [PUT] /admin/users/{lid}/credentials
+
+    Adds user credentials to specific storage.
+
+    Args:
+        lid (str): LUMA user Id.
+        credentials (dict): User credentials for specific storage.
+    """
     if USERS.update({'credentials': credentials}, eids=[lid]):
         LOG.info('Updated credentials for /admin/users/{}'.format(lid))
         return 'OK', 204
@@ -118,22 +196,63 @@ def add_user_credentials(lid, credentials):
 
 
 def map_user_credentials(userCredentialsRequest):
+    """
+    [POST] /map_user_credentials
+
+    Returns user credentials to storage in JSON format.
+
+    Args:
+        userCredentialsRequest (dict): User credentials mapping request.
+    """
     sid = userCredentialsRequest.get('storageId')
     storage_name = userCredentialsRequest.get('storageName')
-    user_details = normalize_user_details(userCredentialsRequest['userDetails'])
+    user_details = __normalize_user_details(userCredentialsRequest['userDetails'])
     if user_details:
-        conditions = iter((where('idp') == acc['idp'])
-                          & (where('userId') == acc['userId'])
-                          for acc in user_details)
-        query = next(conditions)
-        for cond in conditions:
-            query |= cond
+        # Select candidate mappings based on userCredentialRequests
+        # First try to match based on Onedata Id
+        user = None
+        if user_details.get('id') != None:
+            user = USERS.get(where('userDetails').id == user_details.get('id'))
 
-        user = USERS.get(where('userDetails').any(query))
+        # Next compare IdP specific Id's from "connectedAccounts" list
+        if user == None and user_details.get('connectedAccounts'):
+            user_accounts = user_details.get('connectedAccounts')
+            for account in user_accounts:
+                account_query = Query()
+                user = USERS.get(where('userDetails').connectedAccounts.any(
+                         (account_query.idp == account.get('idp'))
+                       & (account_query.userId == account.get('userId'))))
+                if user != None:
+                    break
+
+        # Next, try to match based on emails, at first top level email
+        # from Onedata IdP
+        if user == None and user_details.get('emailList'):
+            for email in user_details['emailList']:
+                user = USERS.get(where('userDetails').emailList.any(email))
+
+        # Finally, try to match based on emails in connectedAccounts
+        if user == None and user_details.get('connectedAccounts'):
+            user_accounts = user_details.get('connectedAccounts')
+            for account in user_accounts:
+                if account.get('emailList') == None:
+                    continue
+                for email in account['emailList']:
+                    account_query = Query()
+                    user = USERS.get(where('userDetails').connectedAccounts.any(
+                              (account_query.idp == account.get('idp'))
+                            & (account_query.emailList.any(email))))
+                    if user != None:
+                        break
+
+        # If we matched some user, check if credentials for requested storage
+        # have been provided
         if user and 'credentials' in user:
             for cred in user['credentials']:
-                if (cred.get('storageId') != None and cred.get('storageId') == sid) \
-                  or (cred.get('storageName') != None and cred.get('storageName') == storage_name):
+                if (cred.get('storageId') != None \
+                        and cred.get('storageId') == sid) \
+                    or (cred.get('storageName') != None \
+                        and cred.get('storageName') == storage_name):
                     LOG.info('Returning credentials for userCredentialsRequest:'
                              '{}'.format(userCredentialsRequest))
                     credentials = {key: val for key, val in cred.items()
@@ -150,6 +269,14 @@ def map_user_credentials(userCredentialsRequest):
 
 
 def resolve_user_identity(userStorageCredentials):
+    """
+    [POST] /resolve_user
+
+    Returns the user identity from storage credentials.
+
+    Args:
+        userStorageCredentials (dict): User storage credentials.
+    """
     conditions = iter(where(attr) == val
                       for attr, val
                       in userStorageCredentials.items())
@@ -161,29 +288,23 @@ def resolve_user_identity(userStorageCredentials):
     if user:
         LOG.info('Returning idp and gid for userStorageCredentials: '
                  '{}'.format(userStorageCredentials))
-        user_details = user['userDetails'][0]
-        return {'idp': user_details['idp'],
-                'userId': user_details['userId']}, 200
+        user_details = user['userDetails']
+        if user_details.get('id'):
+            return {'idp': 'onedata', 'userId': user_details['id']}, 200
+        elif len(user_details.get('connectedAccounts')) > 0:
+            return {'idp': user_details['connectedAccounts'][0]['idp'],
+                    'userId': user_details['connectedAccounts'][0]['userId']}, 200
+        else:
+            LOG.warning('Mapping not found for userStorageCredentials: '
+                    '{}'.format(userStorageCredentials))
+            return 'Mapping not found', 404
     else:
         LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
         return 'Mapping not found', 404
 
 
-def normalize_user_details(user_details):
-    try:
-        connected_accounts = user_details['connectedAccounts']
-    except KeyError:
-        connected_accounts = []
-    else:
-        del user_details['connectedAccounts']
+def __normalize_user_details(user_details):
+    return user_details
 
-    if 'id' in user_details:
-        user_details['idp'] = 'onedata'
-        user_details['userId'] = user_details['id']
-        del user_details['id']
-        connected_accounts.insert(0, user_details)
-    elif 'idp' in user_details and 'userId' in user_details:
-        connected_accounts.insert(0, user_details)
 
-    return connected_accounts

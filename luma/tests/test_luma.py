@@ -25,7 +25,7 @@ USER_DETAILS_2 = {
     "user.i@example2.com"
   ],
   "id": "9743a66f914cc249efca164485a19c5c",
-  "linkedAccounts": [
+  "connectedAccounts": [
     {
       "emailList": [
         "user.1@example.com",
@@ -43,7 +43,7 @@ USER_DETAILS_2 = {
         "userCertificateSubject": "/C=PL/O=GRID/O=ACME/CN=John Doe"
       },
       "emailList": [
-        "user.1@example.com"
+        "user.1@egi.eu"
       ],
       "idp": "EGI",
       "login": "user1",
@@ -54,6 +54,28 @@ USER_DETAILS_2 = {
   "login": "user.one",
   "name": "user1"
 }
+
+USER_DETAILS_3 = {
+  "connectedAccounts": [ {
+      "emailList": [
+        "user.1@egi.eu"
+      ],
+      "idp": "EGI"
+    }
+  ],
+}
+
+USER_DETAILS_4 = {
+  "connectedAccounts": [ {
+      "emailList": [
+        "user.2@egi.eu"
+      ],
+      "idp": "EGI"
+    }
+  ],
+}
+
+
 
 POSIX_STORAGE_CREDENTIALS = {
     "storageId": "1",
@@ -178,9 +200,8 @@ class TestLUMA(unittest.TestCase):
         for credentials in MULTI_STORAGE_CREDENTIALS:
             r7 = requests.post(URL + '/resolve_user', json=credentials)
             self.assertEqual(r7.status_code, 200)
-            user_details = normalize_user_details(USER_DETAILS_2)[0]
-            self.assertEqual(r7.json(), {'idp': user_details['idp'],
-                                         'userId': user_details['userId']})
+            self.assertEqual(r7.json(), {'idp': 'onedata',
+                                         'userId': USER_DETAILS_2['id']})
 
         # delete mapping
         r8 = requests.delete(url)
@@ -190,6 +211,49 @@ class TestLUMA(unittest.TestCase):
         r9 = requests.get(url)
         self.assertEqual(r9.status_code, 404)
 
+    def test_user_mapping_based_on_email(self):
+        # check if one can add users mapping
+        r1 = requests.post(URL + '/admin/users', json=USER_DETAILS_3)
+        self.assertEqual(r1.status_code, 201)
+        _, lid = r1.headers['Location'].rsplit('/', 1)
+        url = URL + '/admin/users/{lid}'.format(lid=lid)
+
+        # assert correct retrieve of data after correct insert
+        r2 = requests.get(url)
+        self.assertEqual(r2.json(), normalize_user_details(USER_DETAILS_3.copy()))
+
+        # set user credentials for multiple storages
+        r3 = requests.put(url + '/credentials', json=MULTI_STORAGE_CREDENTIALS)
+        self.assertEqual(r3.status_code, 204)
+
+        # check normal luma
+        for credentials in MULTI_STORAGE_CREDENTIALS:
+            storage_id = credentials.get('storageId')
+            storage_name = credentials.get('storageName')
+            json = {'userDetails': USER_DETAILS_3}
+            if storage_id != None:
+                json['storageId'] = storage_id
+            if storage_name != None:
+                json['storageName'] = storage_name
+            r6 = requests.post(URL + '/map_user_credentials', json=json)
+            self.assertEqual(r6.status_code, 200)
+            awaited_credentials = {key: val
+                                   for key, val in credentials.items()
+                                   if key not in ('storageId', 'storageName', 'type')}
+            self.assertEqual(r6.json(), awaited_credentials)
+
+        # Check luma with invalid credentials
+        for credentials in MULTI_STORAGE_CREDENTIALS:
+            storage_id = credentials.get('storageId')
+            storage_name = credentials.get('storageName')
+            json = {'userDetails': USER_DETAILS_4}
+            if storage_id != None:
+                json['storageId'] = storage_id
+            if storage_name != None:
+                json['storageName'] = storage_name
+            r6 = requests.post(URL + '/map_user_credentials', json=json)
+            self.assertEqual(r6.status_code, 404)
+
 
 def random_string(length):
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -197,19 +261,4 @@ def random_string(length):
 
 
 def normalize_user_details(user_details):
-    try:
-        connected_accounts = user_details['connectedAccounts']
-    except KeyError:
-        connected_accounts = []
-    else:
-        del user_details['connectedAccounts']
-
-    if 'id' in user_details:
-        user_details['idp'] = 'onedata'
-        user_details['userId'] = user_details['id']
-        del user_details['id']
-        connected_accounts.insert(0, user_details)
-    elif 'idp' in user_details and 'userId' in user_details:
-        connected_accounts.insert(0, user_details)
-
-    return connected_accounts
+    return user_details

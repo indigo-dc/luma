@@ -49,7 +49,7 @@ paths:
       parameters:
       - in: "body"
         name: "userDetails"
-        description: "Add user details for mapping."
+        description: "User details for mapping."
         required: true
         schema:
           $ref: "#/definitions/UserDetails"
@@ -344,7 +344,7 @@ paths:
       tags:
       - "Admin"
       summary: "Delete group mapping"
-      description: "Allows to add group mapping to LUMA.\n"
+      description: "Allows to remove group mapping from LUMA.\n"
       operationId: "controllers.default_controller.delete_group_mapping"
       consumes:
       - "application/json"
@@ -385,7 +385,7 @@ paths:
     post:
       tags:
       - "Mapping"
-      summary: "Get user credentials"
+      summary: "Map user credentials"
       description: "Returns user credentials to storage in JSON format."
       operationId: "controllers.default_controller.map_user_credentials"
       consumes:
@@ -577,7 +577,6 @@ definitions:
     type: "object"
     required:
     - "idp"
-    - "userId"
     properties:
       idp:
         type: "string"
