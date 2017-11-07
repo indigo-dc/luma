@@ -82,6 +82,7 @@ def resolve_group(groupDetails):
     Args:
         groupDetails (dict): Group mapping request.
     """
+    LOG.info('resolve_group requested for {}'.format(groupDetails))
     conditions = iter(where(attr) == val
                       for attr, val
                       in groupDetails.items())
@@ -204,6 +205,7 @@ def map_user_credentials(userCredentialsRequest):
     Args:
         userCredentialsRequest (dict): User credentials mapping request.
     """
+    LOG.info('map_user_credentials requested for {}'.format(userCredentialsRequest))
     sid = userCredentialsRequest.get('storageId')
     storage_name = userCredentialsRequest.get('storageName')
     user_details = __normalize_user_details(userCredentialsRequest['userDetails'])
@@ -277,6 +279,7 @@ def resolve_user_identity(userStorageCredentials):
     Args:
         userStorageCredentials (dict): User storage credentials.
     """
+    LOG.info('resolve_user_identity requested for {}'.format(userStorageCredentials))
     if userStorageCredentials.get('id'):
         userStorageCredentials['storageId'] = userStorageCredentials['id']
         del userStorageCredentials['id']
