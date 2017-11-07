@@ -81,8 +81,11 @@ def resolve_group(groupDetails):
 
     Args:
         groupDetails (dict): Group mapping request.
+                             Example: {'type': 'posix', 'id': 'OgH593lnMvdZNwfVLEyi5LvDV9cvBFMTvWy1ilT5ao8', 'gid': '1005'}
     """
     LOG.info('resolve_group requested for {}'.format(groupDetails))
+    if groupDetails.get('type') != None:
+        del groupDetails['type']
 
     conditions = iter(where(attr) == val
                       for attr, val
