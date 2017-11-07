@@ -127,8 +127,7 @@ MULTI_STORAGE_CREDENTIALS = [
 
 GROUP_DETAILS = {
     "gid": "1001",
-    "name": "users",
-    "id": "1"
+    "storageName": "NFS"
 }
 
 
@@ -158,7 +157,9 @@ class TestLUMA(unittest.TestCase):
         self.assertEqual(r2.json(), [GROUP_DETAILS])
 
         # check group resolving
-        r3 = requests.post(URL + '/resolve_group', json=GROUP_DETAILS)
+        group_details_with_id = GROUP_DETAILS.copy()
+        group_details_with_id['storageId'] = '1234'
+        r3 = requests.post(URL + '/resolve_group', json=group_details_with_id)
         self.assertEqual(r3.status_code, 200)
         self.assertEqual(r3.json(), {'idp': idp, 'groupId': group_id})
 
@@ -203,7 +204,7 @@ class TestLUMA(unittest.TestCase):
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
-            awaited_credentials = {key: val
+            awaited_credentials = {key: str(val)
                                    for key, val in credentials.items()
                                    if key not in ('storageId', 'storageName', 'type')}
             self.assertEqual(r6.json(), awaited_credentials)
@@ -261,7 +262,7 @@ class TestLUMA(unittest.TestCase):
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
-            awaited_credentials = {key: val
+            awaited_credentials = {key: str(val)
                                    for key, val in credentials.items()
                                    if key not in ('storageId', 'storageName', 'type')}
             self.assertEqual(r6.json(), awaited_credentials)

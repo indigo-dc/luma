@@ -714,12 +714,13 @@ definitions:
     description: "Generic storage credentials response type."
   GroupDetails:
     type: "object"
-    required:
-    - "id"
     properties:
-      id:
+      storageId:
         type: "string"
         description: "Storage ID (site specific).\n"
+      storageName:
+        type: "string"
+        description: "Storage Name (site specific).\n"
       gid:
         type: "string"
         description: "Type of storage.\n"
@@ -729,7 +730,8 @@ definitions:
     description: "Group identity. At least one of `gid` and `name` properties are\
       \ required.\n"
     example:
-      id: "Assdwe897Dsdjhx9"
+      storageId: "Assdwe897Dsdjhx9"
+      storageName: "NFS"
       gid: "1001"
       name: "users"
   GroupIdentity:

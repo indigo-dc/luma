@@ -46,8 +46,7 @@ def get_group_mapping(idp, groupId):
     """
     group = GROUPS.get((where('idp') == idp) & (where('groupId') == groupId))
     if group:
-        LOG.info('Returning groupDetails for group {} of {}'.format(groupId,
-                                                                    idp))
+        LOG.info('Returning groupDetails: {}'.format(group['groupDetails']))
         return group['groupDetails'], 200
     else:
         LOG.warning('Group {} of idp {} not found'.format(groupId, idp))
@@ -83,6 +82,10 @@ def resolve_group(groupDetails):
         groupDetails (dict): Group mapping request.
     """
     LOG.info('resolve_group requested for {}'.format(groupDetails))
+    if groupDetails.get('type') != None:
+        del groupDetails['type']
+    if groupDetails.get('storageId') != None:
+        del groupDetails['storageId']
 
     conditions = iter(where(attr) == val
                       for attr, val
@@ -93,9 +96,9 @@ def resolve_group(groupDetails):
 
     group = GROUPS.get(where('groupDetails').any(query))
     if group:
-        LOG.info('Returning idp and groupId for groupDetails: '
-                 '{}'.format(groupDetails))
-        return {'idp': group['idp'], 'groupId': group['groupId']}, 200
+        result = {'idp': group['idp'], 'groupId': group['groupId']}
+        LOG.info('Returning idp and groupId: {}'.format(result))
+        return result, 200
     else:
         LOG.warning('Mapping not found for groupDetails: '
                     '{}'.format(groupDetails))
@@ -155,7 +158,7 @@ def get_user_details(lid):
     """
     user = USERS.get(eid=lid)
     if user:
-        LOG.info('Returning userDetails of /admin/users/{} '.format(lid))
+        LOG.info('Returning userDetails: {}'.format(user['userDetails']))
         return user['userDetails'], 200
     else:
         LOG.warning('/admin/users/{} not found'.format(lid))
@@ -256,10 +259,9 @@ def map_user_credentials(userCredentialsRequest):
                         and cred.get('storageId') == sid) \
                     or (cred.get('storageName') != None \
                         and cred.get('storageName') == storage_name):
-                    LOG.info('Returning credentials for userCredentialsRequest:'
-                             '{}'.format(userCredentialsRequest))
-                    credentials = {key: val for key, val in cred.items()
+                    credentials = {key: str(val) for key, val in cred.items()
                                    if key not in ('storageId', 'storageName', 'type')}
+                    LOG.info('Returning credentials: {}'.format(credentials))
                     return credentials, 200
 
         LOG.warning('Mapping not found for userCredentialsRequest: '
@@ -301,15 +303,17 @@ def resolve_user_identity(userStorageCredentials):
 
     user = USERS.get(where('credentials').any(query))
     if user:
-        LOG.info('Returning idp and gid for userStorageCredentials: '
-                 '{}'.format(userStorageCredentials))
         user_details = user['userDetails']
         if user_details.get('id'):
-            return {'idp': 'onedata', 'userId': user_details['id']}, 200
+            result = {'idp': 'onedata', 'userId': user_details['id']} 
+            LOG.info('Returning user identity: {}'.format(result))
+            return result, 200
         elif len(user_details.get('connectedAccounts')) > 0 \
                and user_details['connectedAccounts'][0].get('userId'):
-            return {'idp': user_details['connectedAccounts'][0]['idp'],
-                    'userId': user_details['connectedAccounts'][0]['userId']}, 200
+            result = {'idp': user_details['connectedAccounts'][0]['idp'],
+                    'userId': user_details['connectedAccounts'][0]['userId']} 
+            LOG.info('Returning user identity: {}'.format(result))
+            return result, 200
         else:
             LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
