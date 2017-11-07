@@ -236,6 +236,8 @@ def map_user_credentials(userCredentialsRequest):
         if user == None and user_details.get('emailList'):
             for email in user_details['emailList']:
                 user = USERS.get(where('userDetails').emailList.any(email))
+                if user != None:
+                    break
 
         # Finally, try to match based on emails in connectedAccounts
         if user == None and user_details.get('connectedAccounts'):
@@ -254,6 +256,7 @@ def map_user_credentials(userCredentialsRequest):
         # If we matched some user, check if credentials for requested storage
         # have been provided
         if user and 'credentials' in user:
+            LOG.info("EXTRACTING MAPPING FROM CREDS 4: {}".format(user))
             for cred in user['credentials']:
                 if (cred.get('storageId') != None \
                         and cred.get('storageId') == sid) \
@@ -283,9 +286,8 @@ def resolve_user_identity(userStorageCredentials):
         userStorageCredentials (dict): User storage credentials.
     """
     LOG.info('resolve_user_identity requested for {}'.format(userStorageCredentials))
-    if userStorageCredentials.get('id'):
-        userStorageCredentials['storageId'] = userStorageCredentials['id']
-        del userStorageCredentials['id']
+    if userStorageCredentials.get('storageId'):
+        del userStorageCredentials['storageId']
 
     # Do not include file's gid for resolving user identity
     if userStorageCredentials.get('gid'):
