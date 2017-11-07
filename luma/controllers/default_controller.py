@@ -83,6 +83,7 @@ def resolve_group(groupDetails):
         groupDetails (dict): Group mapping request.
     """
     LOG.info('resolve_group requested for {}'.format(groupDetails))
+
     conditions = iter(where(attr) == val
                       for attr, val
                       in groupDetails.items())
@@ -288,6 +289,9 @@ def resolve_user_identity(userStorageCredentials):
     if userStorageCredentials.get('gid'):
         del userStorageCredentials['gid']
 
+    if userStorageCredentials.get('uid') and isinstance(userStorageCredentials['uid'], str):
+        userStorageCredentials['uid'] = int(userStorageCredentials['uid'])
+
     conditions = iter(where(attr) == val
                       for attr, val
                       in userStorageCredentials.items())
@@ -302,7 +306,8 @@ def resolve_user_identity(userStorageCredentials):
         user_details = user['userDetails']
         if user_details.get('id'):
             return {'idp': 'onedata', 'userId': user_details['id']}, 200
-        elif len(user_details.get('connectedAccounts')) > 0:
+        elif len(user_details.get('connectedAccounts')) > 0 \
+               and user_details['connectedAccounts'][0].get('userId'):
             return {'idp': user_details['connectedAccounts'][0]['idp'],
                     'userId': user_details['connectedAccounts'][0]['userId']}, 200
         else:
