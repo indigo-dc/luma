@@ -76,13 +76,20 @@ USER_DETAILS_4 = {
 }
 
 
-
 POSIX_STORAGE_CREDENTIALS = {
     "storageId": "1",
     "type": "posix",
     "uid": 1001,
     "gid": 1001
 }
+
+POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP = {
+    "id": "1",
+    "type": "posix",
+    "uid": 1001,
+    "gid": 1005
+}
+
 
 S3_STORAGE_CREDENTIALS = {
     "storageId": "2",
@@ -202,6 +209,12 @@ class TestLUMA(unittest.TestCase):
             self.assertEqual(r7.status_code, 200)
             self.assertEqual(r7.json(), {'idp': 'onedata',
                                          'userId': USER_DETAILS_2['id']})
+
+        # check reverse luma for file with different group than owner's default
+        r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP)
+        self.assertEqual(r7.status_code, 200)
+        self.assertEqual(r7.json(), {'idp': 'onedata',
+                                     'userId': USER_DETAILS_2['id']})
 
         # delete mapping
         r8 = requests.delete(url)

@@ -277,6 +277,14 @@ def resolve_user_identity(userStorageCredentials):
     Args:
         userStorageCredentials (dict): User storage credentials.
     """
+    if userStorageCredentials.get('id'):
+        userStorageCredentials['storageId'] = userStorageCredentials['id']
+        del userStorageCredentials['id']
+
+    # Do not include file's gid for resolving user identity
+    if userStorageCredentials.get('gid'):
+        del userStorageCredentials['gid']
+
     conditions = iter(where(attr) == val
                       for attr, val
                       in userStorageCredentials.items())
