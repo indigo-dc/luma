@@ -73,39 +73,7 @@ def delete_group_mapping(idp, groupId):
         return 'Group not found', 404
 
 
-def resolve_group(groupDetails):
-    """
-    [POST] /resolve_group
-
-    Returns group identity based on storage specific group id.
-
-    Args:
-        groupDetails (dict): Group mapping request.
-                             Example: {'type': 'posix', 'id': 'OgH593lnMvdZNwfVLEyi5LvDV9cvBFMTvWy1ilT5ao8', 'gid': '1005'}
-    """
-    LOG.info('resolve_group requested for {}'.format(groupDetails))
-    if groupDetails.get('type') != None:
-        del groupDetails['type']
-
-    conditions = iter(where(attr) == val
-                      for attr, val
-                      in groupDetails.items())
-    query = next(conditions)
-    for cond in conditions:
-        query &= cond
-
-    group = GROUPS.get(where('groupDetails').any(query))
-    if group:
-        LOG.info('Returning idp and groupId for groupDetails: '
-                 '{}'.format(groupDetails))
-        return {'idp': group['idp'], 'groupId': group['groupId']}, 200
-    else:
-        LOG.warning('Mapping not found for groupDetails: '
-                    '{}'.format(groupDetails))
-        return 'Mapping not found', 404
-
-
-def post_user_details(userDetails):
+def add_user_details(userDetails):
     """
     [POST] /admin/users
 
@@ -283,18 +251,42 @@ def resolve_user_identity(userStorageCredentials):
     Args:
         userStorageCredentials (dict): User storage credentials.
     """
+    return __resolve_user_identity_base(userStorageCredentials, False)
+
+
+def resolve_acl_user_identity(userStorageCredentials):
+    """
+    [POST] /resolve_acl_user
+
+    Returns the user identity based on storage ACL name.
+
+    Args:
+        userStorageCredentials (dict): User storage credentials.
+    """
+    return __resolve_user_identity_base(userStorageCredentials, True)
+
+
+def __resolve_user_identity_base(userStorageCredentials, acl):
+
     LOG.info('resolve_user_identity requested for {}'.format(userStorageCredentials))
     if userStorageCredentials.get('id'):
         userStorageCredentials['storageId'] = userStorageCredentials['id']
         del userStorageCredentials['id']
 
-    # Do not include file's gid for resolving user identity
+    # Do not include gid for resolving user identity
     if userStorageCredentials.get('gid'):
         del userStorageCredentials['gid']
 
-    if userStorageCredentials.get('uid') and isinstance(userStorageCredentials['uid'], str):
-        userStorageCredentials['uid'] = int(userStorageCredentials['uid'])
+    # If this is an ACL resolution request, check if acl user name
+    # is provider
+    if acl:
+        if userStorageCredentials.get('aclName') == None:
+            return 'aclName field missing', 404
+    else:
+        if userStorageCredentials.get('aclName') != None:
+            del userStorageCredentials['aclName']
 
+    # Build query using remaining fields from userStorageCredentials
     conditions = iter(where(attr) == val
                       for attr, val
                       in userStorageCredentials.items())
@@ -320,6 +312,63 @@ def resolve_user_identity(userStorageCredentials):
     else:
         LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
+        return 'Mapping not found', 404
+
+
+def resolve_group(groupStorageDetails):
+    """
+    [POST] /resolve_group
+
+    Returns group identity based on storage specific group id.
+
+    Args:
+        groupDetails (dict): Group mapping request.
+    """
+    return __resolve_group_base(groupStorageDetails, False)
+
+
+def resolve_acl_group_identity(groupStorageDetails):
+    """
+    [POST] /resolve_acl_group
+
+    Returns group identity based on storage specific group ACL name.
+
+    Args:
+        groupDetails (dict): Group mapping request.
+    """
+    return __resolve_group_base(groupStorageDetails, True)
+
+
+def __resolve_group_base(groupStorageDetails, acl):
+
+    LOG.info('resolve_group requested for {}'.format(groupStorageDetails))
+    if groupStorageDetails.get('type') != None:
+        del groupDetails['type']
+
+    # If this is an ACL resolution request, check if acl user name
+    # is provider
+    if acl:
+        if groupStorageDetails.get('aclName') == None:
+            return 'aclName field missing', 404
+    else:
+        if groupStorageDetails.get('aclName') != None:
+            del groupStorageDetails['aclName']
+
+    conditions = iter(where(attr) == val
+                      for attr, val
+                      in groupStorageDetails.items())
+    query = next(conditions)
+    for cond in conditions:
+        query &= cond
+
+    group = GROUPS.get(where('groupDetails').any(query))
+    if group:
+        LOG.info('Returning idp and groupId for groupDetails: '
+                 '{}'.format(groupStorageDetails))
+        return {'idp': group['idp'], 'groupId': group['groupId']}, 200
+    else:
+        LOG.warning('Mapping not found for groupDetails: '
+                    '{}'.format(groupStorageDetails))
         return 'Mapping not found', 404
 
 

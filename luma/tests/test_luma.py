@@ -78,12 +78,13 @@ USER_DETAILS_4 = {
 POSIX_STORAGE_CREDENTIALS = {
     "storageId": "1",
     "type": "posix",
+    "aclName": "user@example.com",
     "uid": 1001,
     "gid": 1001
 }
 
 POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP = {
-    "id": "1",
+    "storageId": "1",
     "type": "posix",
     "uid": 1001,
     "gid": 1005
@@ -126,11 +127,16 @@ MULTI_STORAGE_CREDENTIALS = [
 ]
 
 GROUP_DETAILS = {
-    "gid": "1001",
-    "name": "users",
+    "gid": 1001,
+    "aclName": "users",
     "id": "1"
 }
 
+GROUP_DETAILS_USERS2 = {
+    "gid": 1001,
+    "aclName": "users2",
+    "id": "1"
+}
 
 class TestLUMA(unittest.TestCase):
 
@@ -150,25 +156,43 @@ class TestLUMA(unittest.TestCase):
         url = URL + path
 
         # check if one can add group mapping
-        r1 = requests.put(url, json=[GROUP_DETAILS])
-        self.assertEqual(r1.status_code, 204)
+        r = requests.put(url, json=[GROUP_DETAILS])
+        self.assertEqual(r.status_code, 204)
 
         # assert correct retrieve of data after correct insert
-        r2 = requests.get(url)
-        self.assertEqual(r2.json(), [GROUP_DETAILS])
+        r = requests.get(url)
+        self.assertEqual(r.json(), [GROUP_DETAILS])
 
         # check group resolving
-        r3 = requests.post(URL + '/resolve_group', json=GROUP_DETAILS)
-        self.assertEqual(r3.status_code, 200)
-        self.assertEqual(r3.json(), {'idp': idp, 'groupId': group_id})
+        group_details_complete = GROUP_DETAILS.copy()
+        r = requests.post(URL + '/resolve_group', json=group_details_complete)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {'idp': idp, 'groupId': group_id})
+
+        # check if group without aclName field will be resolved
+        group_details_without_acl = GROUP_DETAILS.copy()
+        del group_details_without_acl['aclName']
+        r = requests.post(URL + '/resolve_group', json=group_details_without_acl)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {'idp': idp, 'groupId': group_id})
+
+        # check group resolving based on acl
+        r = requests.post(URL + '/resolve_acl_group', json=GROUP_DETAILS)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {'idp': idp, 'groupId': group_id})
+
+        # check group resolving returning 404 without correct aclName
+        r = requests.post(URL + '/resolve_acl_group', json=GROUP_DETAILS_USERS2)
+        self.assertEqual(r.status_code, 404)
 
         # delete mapping
-        r4 = requests.delete(url)
-        self.assertEqual(r4.status_code, 204)
+        r = requests.delete(url)
+        self.assertEqual(r.status_code, 204)
 
         # after delete mapping should not be available
-        r5 = requests.get(url)
-        self.assertEqual(r5.status_code, 404)
+        r = requests.get(url)
+        self.assertEqual(r.status_code, 404)
+
 
     def test_user_mapping(self):
         # check if one can add users mapping
@@ -223,9 +247,18 @@ class TestLUMA(unittest.TestCase):
 
         # check reverse luma for file with uid passed as string
         r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_STRINGS)
+        self.assertEqual(r7.status_code, 404)
+
+        # check reverse luma based on ACl
+        r7 = requests.post(URL + '/resolve_acl_user', json=POSIX_STORAGE_CREDENTIALS)
         self.assertEqual(r7.status_code, 200)
         self.assertEqual(r7.json(), {'idp': 'onedata',
                                      'userId': USER_DETAILS_2['id']})
+
+        posix_storage_without_aclname = POSIX_STORAGE_CREDENTIALS
+        del posix_storage_without_aclname['aclName']
+        r7 = requests.post(URL + '/resolve_acl_user', json=posix_storage_without_aclname)
+        self.assertEqual(r7.status_code, 404)
 
         # delete mapping
         r8 = requests.delete(url)
