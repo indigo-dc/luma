@@ -384,6 +384,53 @@ paths:
       x-onedata-version: 3
       x-tags:
       - tag: "Admin"
+  /map_group:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Map group"
+      description: "Returns storage group GID based on Onedata group ID. This operation\
+        \ allows to map group owners of files from federated group Id to storage specific\
+        \ group Id. By default, each file in a space belongs to a default space group,\
+        \ however this can be changed.\n"
+      operationId: "controllers.default_controller.map_group"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "groupIdentityRequest"
+        description: "Group identity mapping request."
+        required: true
+        schema:
+          $ref: "#/definitions/GroupIdentity"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            $ref: "#/definitions/GroupDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
   /map_user_credentials:
     post:
       tags:
@@ -861,7 +908,9 @@ definitions:
           \ / saml.config.\n"
       groupId:
         type: "string"
-        description: "Id of a group as recognized by a specific identity provider.\n"
+        description: "Id of a group as recognized by a specific identity provider.\
+          \ If this is provided as NULL, the map_group endpoint will return the default\
+          \ GID for current space.\n"
       spaceId:
         type: "string"
         description: "Space ID to provide default group context for space.\n"

@@ -93,7 +93,7 @@ POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP = {
 POSIX_STORAGE_CREDENTIALS_STRINGS = {
     "uid": "1001",
     "type": "posix",
-    "id": "1",
+    "storageId": "1",
     "gid": "1005"
 }
 
@@ -129,13 +129,13 @@ MULTI_STORAGE_CREDENTIALS = [
 GROUP_DETAILS = {
     "gid": 1001,
     "aclName": "users",
-    "id": "1"
+    "storageName": "NFS"
 }
 
 GROUP_DETAILS_USERS2 = {
     "gid": 1001,
     "aclName": "users2",
-    "id": "1"
+    "storageName": "NFS"
 }
 
 class TestLUMA(unittest.TestCase):
@@ -162,6 +162,11 @@ class TestLUMA(unittest.TestCase):
         # assert correct retrieve of data after correct insert
         r = requests.get(url)
         self.assertEqual(r.json(), [GROUP_DETAILS])
+
+        # check group mapping
+        r = requests.post(URL + '/map_group', json={"idp": idp, "groupId": group_id})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), GROUP_DETAILS)
 
         # check group resolving
         group_details_complete = GROUP_DETAILS.copy()

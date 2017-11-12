@@ -242,6 +242,28 @@ def map_user_credentials(userCredentialsRequest):
                 'of id or connectedAccounts'), 400
 
 
+def map_group(groupIdentityRequest):
+    """
+    [POST] /map_group
+
+    Returns the group identity based on group details.
+
+    Args:
+        groupDetailsRequest (dict): Group storage details.
+    """
+    LOG.info('map_group requested for {}'.format(groupIdentityRequest))
+    groupDetails = GROUPS.get(
+          (where('idp') == groupIdentityRequest['idp'])
+        & (where('groupId') == groupIdentityRequest['groupId']))
+
+    if groupDetails != None and groupDetails.get('groupDetails') != None \
+       and len(groupDetails['groupDetails']) > 0:
+        LOG.info('map_group returning groupDetails {}'.format(groupDetails['groupDetails'][0]))
+        return groupDetails['groupDetails'][0], 200
+    else:
+        return 'Group details not found', 404
+
+
 def resolve_user_identity(userStorageCredentials):
     """
     [POST] /resolve_user
@@ -269,9 +291,6 @@ def resolve_acl_user_identity(userStorageCredentials):
 def __resolve_user_identity_base(userStorageCredentials, acl):
 
     LOG.info('resolve_user_identity requested for {}'.format(userStorageCredentials))
-    if userStorageCredentials.get('id'):
-        userStorageCredentials['storageId'] = userStorageCredentials['id']
-        del userStorageCredentials['id']
 
     # Do not include gid for resolving user identity
     if userStorageCredentials.get('gid'):
