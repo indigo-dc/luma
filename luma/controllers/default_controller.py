@@ -230,7 +230,7 @@ def map_user_credentials(userCredentialsRequest):
                     LOG.info('Returning credentials for userCredentialsRequest:'
                              '{}'.format(userCredentialsRequest))
                     credentials = {key: val for key, val in cred.items()
-                                   if key not in ('storageId', 'storageName', 'type')}
+                                   if key not in ('aclName', 'storageId', 'storageName', 'type')}
                     return credentials, 200
 
         LOG.warning('Mapping not found for userCredentialsRequest: '
