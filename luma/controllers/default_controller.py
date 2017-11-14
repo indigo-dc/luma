@@ -1,5 +1,6 @@
 import os
 import logging
+import copy
 
 from tinydb import TinyDB, Query, where
 
@@ -296,6 +297,9 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
     if userStorageCredentials.get('gid'):
         del userStorageCredentials['gid']
 
+    if userStorageCredentials.get('spaceId') != None:
+        del userStorageCredentials['spaceId']
+
     # If this is an ACL resolution request, check if acl user name
     # is provider
     if acl:
@@ -306,14 +310,32 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
             del userStorageCredentials['aclName']
 
     # Build query using remaining fields from userStorageCredentials
-    conditions = iter(where(attr) == val
-                      for attr, val
-                      in userStorageCredentials.items())
-    query = next(conditions)
-    for cond in conditions:
-        query &= cond
+    # First search based on storageId
+    user = None
+    if userStorageCredentials.get('storageId') != None:
+        creds = copy.deepcopy(userStorageCredentials)
+        if creds.get('storageName') != None:
+            del creds['storageName']
+        conditions = iter(where(attr) == val
+                          for attr, val
+                          in creds.items())
+        query = next(conditions)
+        for cond in conditions:
+            query &= cond
+        user = USERS.get(where('credentials').any(query))
 
-    user = USERS.get(where('credentials').any(query))
+    if user == None and userStorageCredentials.get('storageName') != None:
+        creds = copy.deepcopy(userStorageCredentials)
+        if creds.get('storageId') != None:
+            del creds['storageId']
+        conditions = iter(where(attr) == val
+                          for attr, val
+                          in creds.items())
+        query = next(conditions)
+        for cond in conditions:
+            query &= cond
+        user = USERS.get(where('credentials').any(query))
+
     if user:
         LOG.info('Returning idp and gid for userStorageCredentials: '
                  '{}'.format(userStorageCredentials))
@@ -361,8 +383,13 @@ def resolve_acl_group_identity(groupStorageDetails):
 def __resolve_group_base(groupStorageDetails, acl):
 
     LOG.info('resolve_group requested for {}'.format(groupStorageDetails))
+
     if groupStorageDetails.get('type') != None:
-        del groupDetails['type']
+        del groupStorageDetails['type']
+
+    if groupStorageDetails.get('spaceId') != None:
+        del groupStorageDetails['spaceId']
+
 
     # If this is an ACL resolution request, check if acl user name
     # is provider
@@ -373,14 +400,33 @@ def __resolve_group_base(groupStorageDetails, acl):
         if groupStorageDetails.get('aclName') != None:
             del groupStorageDetails['aclName']
 
-    conditions = iter(where(attr) == val
-                      for attr, val
-                      in groupStorageDetails.items())
-    query = next(conditions)
-    for cond in conditions:
-        query &= cond
+    # Build query using remaining fields from groupStorageDetails
+    # First search based on storageId
+    group = None
+    if groupStorageDetails.get('storageId') != None:
+        creds = copy.deepcopy(groupStorageDetails)
+        if creds.get('storageName') != None:
+            del creds['storageName']
+        conditions = iter(where(attr) == val
+                          for attr, val
+                          in creds.items())
+        query = next(conditions)
+        for cond in conditions:
+            query &= cond
+        group = GROUPS.get(where('groupDetails').any(query))
 
-    group = GROUPS.get(where('groupDetails').any(query))
+    if group == None and groupStorageDetails.get('storageName') != None:
+        creds = copy.deepcopy(groupStorageDetails)
+        if creds.get('storageId') != None:
+            del creds['storageId']
+        conditions = iter(where(attr) == val
+                          for attr, val
+                          in creds.items())
+        query = next(conditions)
+        for cond in conditions:
+            query &= cond
+        group = GROUPS.get(where('groupDetails').any(query))
+
     if group:
         LOG.info('Returning idp and groupId for groupDetails: '
                  '{}'.format(groupStorageDetails))
