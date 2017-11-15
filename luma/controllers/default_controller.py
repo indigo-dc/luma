@@ -1,3 +1,8 @@
+"""Authors: Bartosz Walkowicz, Bartosz Kryza
+Copyright (C) 2017 ACK CYFRONET AGH
+This software is released under the MIT license cited in 'LICENSE.txt'
+"""
+
 import os
 import logging
 import copy
@@ -29,9 +34,10 @@ def add_group_mapping(idp, groupId, groupDetails):
         groupDetails (dict): The mapping between groupId and GID and group name.
     """
     LOG.info('Adding group mapping ({}, {}) -> {}'.format(idp, groupId,
-                                                          str(groupDetails)))
+                                                           str(groupDetails)))
     GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId))
-    GROUPS.insert({'idp': idp, 'groupId': groupId, 'groupDetails': groupDetails})
+    GROUPS.insert({'idp': idp, 'groupId': groupId,
+                   'groupDetails': groupDetails})
     return 'OK', 204
 
 
@@ -67,7 +73,7 @@ def delete_group_mapping(idp, groupId):
     """
     if GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId)):
         LOG.info('Removed group mapping for group {} of {}'.format(groupId,
-                                                                   idp))
+                                                                    idp))
         return 'OK', 204
     else:
         LOG.warning('Group {} of idp {} not found'.format(groupId, idp))
@@ -89,7 +95,7 @@ def add_user_details(userDetails):
         lid = USERS.insert({'userDetails': details})
         return 'OK', 201, {'Location': '/admin/users/{}'.format(lid)}
     else:
-        return ('UserDetails should have at least one '
+        return ('UserDetails require at least at least one '
                 'of id or connectedAccounts'), 400
 
 
@@ -97,7 +103,8 @@ def update_user_details(lid, userDetails):
     """
     [PUT] /admin/users/{lid}
 
-    Allows to update user details, based on which credential mapping will be performed.
+    Allows to update user details, based on which credential mapping will be
+    performed.
 
     Args:
         lid (str): LUMA user Id.
@@ -178,10 +185,12 @@ def map_user_credentials(userCredentialsRequest):
     Args:
         userCredentialsRequest (dict): User credentials mapping request.
     """
-    LOG.info('map_user_credentials requested for {}'.format(userCredentialsRequest))
+    LOG.info('map_user_credentials requested for {}'
+             .format(userCredentialsRequest))
     sid = userCredentialsRequest.get('storageId')
     storage_name = userCredentialsRequest.get('storageName')
-    user_details = __normalize_user_details(userCredentialsRequest['userDetails'])
+    user_details = __normalize_user_details(
+                                        userCredentialsRequest['userDetails'])
     if user_details:
         # Select candidate mappings based on userCredentialRequests
         # First try to match based on Onedata Id
@@ -228,10 +237,11 @@ def map_user_credentials(userCredentialsRequest):
                         and cred.get('storageId') == sid) \
                     or (cred.get('storageName') != None \
                         and cred.get('storageName') == storage_name):
-                    LOG.info('Returning credentials for userCredentialsRequest:'
-                             '{}'.format(userCredentialsRequest))
                     credentials = {key: val for key, val in cred.items()
-                                   if key not in ('aclName', 'storageId', 'storageName', 'type')}
+                                   if key not in ('aclName', 'storageId',
+                                                  'storageName', 'type')}
+                    LOG.info('Returning credentials for userCredentialsRequest:'
+                             '{}'.format(credentials))
                     return credentials, 200
 
         LOG.warning('Mapping not found for userCredentialsRequest: '
@@ -253,13 +263,20 @@ def map_group(groupIdentityRequest):
         groupDetailsRequest (dict): Group storage details.
     """
     LOG.info('map_group requested for {}'.format(groupIdentityRequest))
+    if groupIdentityRequest.get('idp') == None:
+        groupIdentityRequest['idp'] = 'onedata'
+
+    if groupIdentityRequest.get('groupId') == None:
+        return 'Group details not found', 404
+
     groupDetails = GROUPS.get(
           (where('idp') == groupIdentityRequest['idp'])
         & (where('groupId') == groupIdentityRequest['groupId']))
 
     if groupDetails != None and groupDetails.get('groupDetails') != None \
        and len(groupDetails['groupDetails']) > 0:
-        LOG.info('map_group returning groupDetails {}'.format(groupDetails['groupDetails'][0]))
+        LOG.info('map_group returning groupDetails {}'
+                 .format(groupDetails['groupDetails'][0]))
         return groupDetails['groupDetails'][0], 200
     else:
         return 'Group details not found', 404
@@ -290,8 +307,19 @@ def resolve_acl_user_identity(userStorageCredentials):
 
 
 def __resolve_user_identity_base(userStorageCredentials, acl):
+    """
+    This function returns the user identity as defined in the LUMA
+    database, either based on user storage credentials or ACL name.
 
-    LOG.info('resolve_user_identity requested for {}'.format(userStorageCredentials))
+    Args:
+        userStorageCredentials (dict): User storage credentials.
+        acl (bool): Determines whether the mapping should be performed based
+                    on storage credentials (e.g. 'uid' attribute) or based
+                    on ACL name ('aclName' attribute)
+    """
+
+    LOG.info('resolve_user_identity requested for {}'
+             .format(userStorageCredentials))
 
     # Do not include gid for resolving user identity
     if userStorageCredentials.get('gid'):
@@ -345,7 +373,7 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
         elif len(user_details.get('connectedAccounts')) > 0 \
                and user_details['connectedAccounts'][0].get('userId'):
             return {'idp': user_details['connectedAccounts'][0]['idp'],
-                    'userId': user_details['connectedAccounts'][0]['userId']}, 200
+                 'userId': user_details['connectedAccounts'][0]['userId']}, 200
         else:
             LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
@@ -381,6 +409,16 @@ def resolve_acl_group_identity(groupStorageDetails):
 
 
 def __resolve_group_base(groupStorageDetails, acl):
+    """
+    This function returns the federated group id as defined in the LUMA
+    database, either based on group storage id (e.g. 'gid') or ACL name.
+
+    Args:
+        groupStorageDetails (dict): Group storage id.
+        acl (bool): Determines whether the mapping should be performed based
+                    on storage credentials (e.g. 'gid' attribute) or based
+                    on ACL name ('aclName' attribute).
+    """
 
     LOG.info('resolve_group requested for {}'.format(groupStorageDetails))
 
@@ -439,5 +477,3 @@ def __resolve_group_base(groupStorageDetails, acl):
 
 def __normalize_user_details(user_details):
     return user_details
-
-
