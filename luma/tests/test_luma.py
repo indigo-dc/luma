@@ -150,6 +150,32 @@ class TestLUMA(unittest.TestCase):
     def tearDownClass(cls):
         cls.proc.kill()
 
+
+    def test_default_space_mapping(self):
+        sid = random_string(10)
+        gid = 1010
+        url = URL + '/admin/spaces/{sid}/default_group'.format(sid=sid)
+
+        # set default space mapping
+        r = requests.put(url, json={'gid': gid})
+        self.assertEqual(r.status_code, 204)
+
+        # check that the default space group can be retrieved using admin api
+        r = requests.get(url)
+        self.assertEqual(r.json()['gid'], gid)
+
+        # check that the default gid will be returned for map_group
+        r = requests.post(URL + '/map_group', json={"spaceId": sid})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json(), {'gid': gid})
+
+        # check that the default space gropu can be removed
+        r = requests.delete(url)
+        self.assertEqual(r.status_code, 204)
+        r = requests.get(url)
+        self.assertEqual(r.status_code, 404)
+
+
     def test_group_mapping(self):
         idp, group_id = random_string(10), random_string(20)
         path = '/admin/{idp}/groups/{gid}'.format(idp=idp, gid=group_id)

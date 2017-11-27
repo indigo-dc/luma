@@ -18,7 +18,7 @@ info:
     \ different types of credentials.\n\nAs of now there are the following supported\
     \ storage systems, each with it's\nown type of credentials:\n * Posix\n * Ceph\n\
     \ * Amazon S3\n * Openstack Swift\n * GlusterFS\n\nMore information: [https://github.com/onedata/luma](https://github.com/onedata/luma)\n"
-  version: "17.06.0-rc7"
+  version: "17.06.0-rc8"
   title: "LUMA"
   contact:
     name: "Onedata support"
@@ -37,6 +37,121 @@ tags:
 - name: "Admin"
   description: "LUMA management endpoint"
 paths:
+  /admin/spaces/{sid}/default_group:
+    get:
+      tags:
+      - "Admin"
+      summary: "Get default space group"
+      description: "Returns default group gid for a specific space."
+      operationId: "controllers.default_controller.get_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be returned.\n"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            $ref: "#/definitions/GroupDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    put:
+      tags:
+      - "Admin"
+      summary: "Set default space group"
+      description: "Allows to specify a custom group gid for a space.\n"
+      operationId: "controllers.default_controller.set_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be set.\n"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "groupDetails"
+        description: "Add group details for mapping."
+        required: true
+        schema:
+          $ref: "#/definitions/GroupDetails"
+      responses:
+        204:
+          description: "Group mapping added successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    delete:
+      tags:
+      - "Admin"
+      summary: "Delete default space group"
+      description: "Allows to remove default group gid for a space.\n"
+      operationId: "controllers.default_controller.delete_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be removed.\n"
+        required: true
+        type: "string"
+      responses:
+        204:
+          description: "Default group removed successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
   /admin/users:
     post:
       tags:

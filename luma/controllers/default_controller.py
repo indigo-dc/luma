@@ -20,6 +20,59 @@ DB_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 DB = TinyDB(DB_PATH)
 USERS = DB.table('users')
 GROUPS = DB.table('groups')
+SPACES = DB.table('spaces')
+
+
+def get_space_default_group(sid):
+    """
+    [GET] /admin/spaces/{sid}/default_group
+
+    Returns default group GID for a space.
+
+    Args:
+        sid (str): Space Id.
+    """
+    group = SPACES.get((where('spaceId') == sid))
+    if group:
+        LOG.info('Returning default group for space {}'.format(sid))
+        return group['groupDetails'], 200
+    else:
+        LOG.warning('Default group for space {} not found'.format(sid))
+        return 'Group not found', 404
+
+
+def set_space_default_group(sid, groupDetails):
+    """
+    [PUT] /admin/spaces/{sid}/default_group
+
+    Allows to add group mapping to LUMA.
+
+    Args:
+        sid (str): Space Id.
+        groupDetails (dict): The default group gid.
+    """
+    LOG.info('Setting default group {} for space {}'.format(str(groupDetails),
+                                                            sid))
+    SPACES.remove((where('spaceId') == sid))
+    SPACES.insert({'spaceId': sid, 'groupDetails': groupDetails})
+    return 'OK', 204
+
+
+def delete_space_default_group(sid):
+    """
+    [DELETE] /admin/spaces/{sid}/default_group
+
+    Allows to remove space default group gid from LUMA.
+
+    Args:
+        sid (str): Space Id.
+    """
+    if SPACES.remove((where('spaceId') == sid)):
+        LOG.info('Removed default group for space {}'.format(sid))
+        return 'OK', 204
+    else:
+        LOG.warning('Default group for space {} not found'.format(sid))
+        return 'Group not found', 404
 
 
 def add_group_mapping(idp, groupId, groupDetails):
@@ -267,6 +320,17 @@ def map_group(groupIdentityRequest):
         groupIdentityRequest['idp'] = 'onedata'
 
     if groupIdentityRequest.get('groupId') == None:
+        if groupIdentityRequest.get('spaceId') != None:
+            # Try to check if a default GID is defined for a space
+            groupDetails = SPACES.get(
+                where('spaceId') == groupIdentityRequest.get('spaceId'))
+            if groupDetails != None \
+                    and groupDetails.get('groupDetails') != None:
+                LOG.info('map_group returning default group for '
+                         'space {}'.format(groupDetails['groupDetails']))
+                return groupDetails['groupDetails'], 200
+            else:
+                return 'Group details not found', 404
         return 'Group details not found', 404
 
     groupDetails = GROUPS.get(
