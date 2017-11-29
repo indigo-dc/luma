@@ -30,7 +30,7 @@ def get_space_default_group(sid):
     Returns default group GID for a space.
 
     Args:
-        sid (str): Space Id.
+    sid (str): Space Id.
     """
     group = SPACES.get((where('spaceId') == sid))
     if group:
@@ -48,11 +48,20 @@ def set_space_default_group(sid, groupDetails):
     Allows to add group mapping to LUMA.
 
     Args:
-        sid (str): Space Id.
-        groupDetails (dict): The default group gid.
+    sid (str): Space Id.
+    groupDetails (dict): The default group gid.
     """
     LOG.info('Setting default group {} for space {}'.format(str(groupDetails),
                                                             sid))
+    for groupDetailsItem in groupDetails:
+        if groupDetailsItem.get('gid') == None:
+            LOG.error('Missing required property "gid"')
+            return 'Missing required property "gid"', 400
+
+        if groupDetailsItem.get('storageId') == None and groupDetailsItem.get('storageName') == None:
+            LOG.error('Missing either "storageId" or "storageName"')
+            return 'Missing either "storageId" or "storageName"', 400
+
     SPACES.remove((where('spaceId') == sid))
     SPACES.insert({'spaceId': sid, 'groupDetails': groupDetails})
     return 'OK', 204
@@ -65,7 +74,7 @@ def delete_space_default_group(sid):
     Allows to remove space default group gid from LUMA.
 
     Args:
-        sid (str): Space Id.
+    sid (str): Space Id.
     """
     if SPACES.remove((where('spaceId') == sid)):
         LOG.info('Removed default group for space {}'.format(sid))
@@ -82,12 +91,12 @@ def add_group_mapping(idp, groupId, groupDetails):
     Allows to add group mapping to LUMA.
 
     Args:
-        idp (str): Name of IdP (e.g. onedata, github)
-        groupId (str): Id of the group in 'idp'
-        groupDetails (dict): The mapping between groupId and GID and group name.
+    idp (str): Name of IdP (e.g. onedata, github)
+    groupId (str): Id of the group in 'idp'
+    groupDetails (dict): The mapping between groupId and GID and group name.
     """
     LOG.info('Adding group mapping ({}, {}) -> {}'.format(idp, groupId,
-                                                           str(groupDetails)))
+                                                          str(groupDetails)))
     GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId))
     GROUPS.insert({'idp': idp, 'groupId': groupId,
                    'groupDetails': groupDetails})
@@ -101,8 +110,8 @@ def get_group_mapping(idp, groupId):
     Returns group details known by LUMA.
 
     Args:
-        idp (str): Name of IdP (e.g. onedata, github)
-        groupId (str): Id of the group in 'idp'
+    idp (str): Name of IdP (e.g. onedata, github)
+    groupId (str): Id of the group in 'idp'
     """
     group = GROUPS.get((where('idp') == idp) & (where('groupId') == groupId))
     if group:
@@ -121,12 +130,12 @@ def delete_group_mapping(idp, groupId):
     Allows to remove group mapping from LUMA.
 
     Args:
-        idp (str): Name of IdP (e.g. onedata, github)
-        groupId (str): Id of the group in 'idp'
+    idp (str): Name of IdP (e.g. onedata, github)
+    groupId (str): Id of the group in 'idp'
     """
     if GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId)):
         LOG.info('Removed group mapping for group {} of {}'.format(groupId,
-                                                                    idp))
+                                                                   idp))
         return 'OK', 204
     else:
         LOG.warning('Group {} of idp {} not found'.format(groupId, idp))
@@ -140,7 +149,7 @@ def add_user_details(userDetails):
     Add user details an return LUMA id.
 
     Args:
-        userDetails (dict): User details which will be used for mapping.
+    userDetails (dict): User details which will be used for mapping.
     """
     details = __normalize_user_details(userDetails)
     if details:
@@ -160,8 +169,8 @@ def update_user_details(lid, userDetails):
     performed.
 
     Args:
-        lid (str): LUMA user Id.
-        userDetails (dict): User details which will be used for mapping.
+    lid (str): LUMA user Id.
+    userDetails (dict): User details which will be used for mapping.
     """
     details = __normalize_user_details(userDetails)
     if details:
@@ -183,7 +192,7 @@ def get_user_details(lid):
     Returns user details known by LUMA.
 
     Args:
-        lid (str): LUMA user Id.
+    lid (str): LUMA user Id.
     """
     user = USERS.get(eid=lid)
     if user:
@@ -201,7 +210,7 @@ def delete_user(lid):
     Deletes user details from LUMA database.
 
     Args:
-        lid (str): LUMA user Id.
+    lid (str): LUMA user Id.
     """
     if USERS.remove(eids=[lid]):
         LOG.info('Removed /admin/users/{}'.format(lid))
@@ -218,8 +227,8 @@ def add_user_credentials(lid, credentials):
     Adds user credentials to specific storage.
 
     Args:
-        lid (str): LUMA user Id.
-        credentials (dict): User credentials for specific storage.
+    lid (str): LUMA user Id.
+    credentials (dict): User credentials for specific storage.
     """
     if USERS.update({'credentials': credentials}, eids=[lid]):
         LOG.info('Updated credentials for /admin/users/{}'.format(lid))
@@ -236,14 +245,14 @@ def map_user_credentials(userCredentialsRequest):
     Returns user credentials to storage in JSON format.
 
     Args:
-        userCredentialsRequest (dict): User credentials mapping request.
+    userCredentialsRequest (dict): User credentials mapping request.
     """
     LOG.info('map_user_credentials requested for {}'
              .format(userCredentialsRequest))
     sid = userCredentialsRequest.get('storageId')
     storage_name = userCredentialsRequest.get('storageName')
     user_details = __normalize_user_details(
-                                        userCredentialsRequest['userDetails'])
+        userCredentialsRequest['userDetails'])
     if user_details:
         # Select candidate mappings based on userCredentialRequests
         # First try to match based on Onedata Id
@@ -257,8 +266,8 @@ def map_user_credentials(userCredentialsRequest):
             for account in user_accounts:
                 account_query = Query()
                 user = USERS.get(where('userDetails').connectedAccounts.any(
-                         (account_query.idp == account.get('idp'))
-                       & (account_query.userId == account.get('userId'))))
+                    (account_query.idp == account.get('idp'))
+                    & (account_query.userId == account.get('userId'))))
                 if user != None:
                     break
 
@@ -277,8 +286,8 @@ def map_user_credentials(userCredentialsRequest):
                 for email in account['emailList']:
                     account_query = Query()
                     user = USERS.get(where('userDetails').connectedAccounts.any(
-                              (account_query.idp == account.get('idp'))
-                            & (account_query.emailList.any(email))))
+                        (account_query.idp == account.get('idp'))
+                        & (account_query.emailList.any(email))))
                     if user != None:
                         break
 
@@ -288,8 +297,8 @@ def map_user_credentials(userCredentialsRequest):
             for cred in user['credentials']:
                 if (cred.get('storageId') != None \
                         and cred.get('storageId') == sid) \
-                    or (cred.get('storageName') != None \
-                        and cred.get('storageName') == storage_name):
+                        or (cred.get('storageName') != None \
+                            and cred.get('storageName') == storage_name):
                     credentials = {key: val for key, val in cred.items()
                                    if key not in ('aclName', 'storageId',
                                                   'storageName', 'type')}
@@ -313,32 +322,51 @@ def map_group(groupIdentityRequest):
     Returns the group identity based on group details.
 
     Args:
-        groupDetailsRequest (dict): Group storage details.
+    groupDetailsRequest (dict): Group storage details.
     """
     LOG.info('map_group requested for {}'.format(groupIdentityRequest))
     if groupIdentityRequest.get('idp') == None:
         groupIdentityRequest['idp'] = 'onedata'
 
+    if groupIdentityRequest.get('storageName') == None and \
+            groupIdentityRequest.get('storageId') == None:
+        LOG.error("Either storageId or storageName are required for map_group")
+        return 'Missing storageName or storageId', 400
+
     if groupIdentityRequest.get('groupId') == None:
         if groupIdentityRequest.get('spaceId') != None:
             # Try to check if a default GID is defined for a space
-            groupDetails = SPACES.get(
+            groupDetailsForSpace = SPACES.get(
                 where('spaceId') == groupIdentityRequest.get('spaceId'))
-            if groupDetails != None \
-                    and groupDetails.get('groupDetails') != None:
-                LOG.info('map_group returning default group for '
-                         'space {}'.format(groupDetails['groupDetails']))
-                return groupDetails['groupDetails'], 200
+            if groupDetailsForSpace != None and \
+                groupDetailsForSpace.get('groupDetails') != None:
+                for group in groupDetailsForSpace['groupDetails']:
+                    defaultGroup = None
+                    if(groupIdentityRequest.get('storageId') != None and \
+                       group.get('storageId') != None and \
+                       group['storageId'] == groupIdentityRequest['storageId']):
+                        defaultGroup = {'gid': group['gid']}
+                    elif(groupIdentityRequest.get('storageName') != None and \
+                            group.get('storageName') != None and \
+                            group['storageName'] == groupIdentityRequest['storageName']):
+                        defaultGroup = {'gid': group['gid']}
+
+                    if defaultGroup:
+                        LOG.info('map_group returning default group {} for '
+                                 'space {}'.format(defaultGroup, groupIdentityRequest.get('spaceId')))
+                        return defaultGroup, 200
+                    else:
+                        return 'Default group for space not found', 404
             else:
                 return 'Group details not found', 404
         return 'Group details not found', 404
 
     groupDetails = GROUPS.get(
-          (where('idp') == groupIdentityRequest['idp'])
+        (where('idp') == groupIdentityRequest['idp'])
         & (where('groupId') == groupIdentityRequest['groupId']))
 
     if groupDetails != None and groupDetails.get('groupDetails') != None \
-       and len(groupDetails['groupDetails']) > 0:
+            and len(groupDetails['groupDetails']) > 0:
         LOG.info('map_group returning groupDetails {}'
                  .format(groupDetails['groupDetails'][0]))
         return groupDetails['groupDetails'][0], 200
@@ -353,7 +381,7 @@ def resolve_user_identity(userStorageCredentials):
     Returns the user identity from storage credentials.
 
     Args:
-        userStorageCredentials (dict): User storage credentials.
+    userStorageCredentials (dict): User storage credentials.
     """
     return __resolve_user_identity_base(userStorageCredentials, False)
 
@@ -365,7 +393,7 @@ def resolve_acl_user_identity(userStorageCredentials):
     Returns the user identity based on storage ACL name.
 
     Args:
-        userStorageCredentials (dict): User storage credentials.
+    userStorageCredentials (dict): User storage credentials.
     """
     return __resolve_user_identity_base(userStorageCredentials, True)
 
@@ -376,10 +404,10 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
     database, either based on user storage credentials or ACL name.
 
     Args:
-        userStorageCredentials (dict): User storage credentials.
-        acl (bool): Determines whether the mapping should be performed based
-                    on storage credentials (e.g. 'uid' attribute) or based
-                    on ACL name ('aclName' attribute)
+    userStorageCredentials (dict): User storage credentials.
+    acl (bool): Determines whether the mapping should be performed based
+    on storage credentials (e.g. 'uid' attribute) or based
+    on ACL name ('aclName' attribute)
     """
 
     LOG.info('resolve_user_identity requested for {}'
@@ -397,9 +425,9 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
     if acl:
         if userStorageCredentials.get('aclName') == None:
             return 'aclName field missing', 404
-    else:
-        if userStorageCredentials.get('aclName') != None:
-            del userStorageCredentials['aclName']
+        else:
+            if userStorageCredentials.get('aclName') != None:
+                del userStorageCredentials['aclName']
 
     # Build query using remaining fields from userStorageCredentials
     # First search based on storageId
@@ -435,12 +463,12 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
         if user_details.get('id'):
             return {'idp': 'onedata', 'userId': user_details['id']}, 200
         elif len(user_details.get('connectedAccounts')) > 0 \
-               and user_details['connectedAccounts'][0].get('userId'):
+            and user_details['connectedAccounts'][0].get('userId'):
             return {'idp': user_details['connectedAccounts'][0]['idp'],
-                 'userId': user_details['connectedAccounts'][0]['userId']}, 200
+                    'userId': user_details['connectedAccounts'][0]['userId']}, 200
         else:
             LOG.warning('Mapping not found for userStorageCredentials: '
-                    '{}'.format(userStorageCredentials))
+                        '{}'.format(userStorageCredentials))
             return 'Mapping not found', 404
     else:
         LOG.warning('Mapping not found for userStorageCredentials: '
@@ -455,7 +483,7 @@ def resolve_group(groupStorageDetails):
     Returns group identity based on storage specific group id.
 
     Args:
-        groupDetails (dict): Group mapping request.
+    groupDetails (dict): Group mapping request.
     """
     return __resolve_group_base(groupStorageDetails, False)
 
@@ -467,7 +495,7 @@ def resolve_acl_group_identity(groupStorageDetails):
     Returns group identity based on storage specific group ACL name.
 
     Args:
-        groupDetails (dict): Group mapping request.
+    groupDetails (dict): Group mapping request.
     """
     return __resolve_group_base(groupStorageDetails, True)
 
@@ -478,10 +506,10 @@ def __resolve_group_base(groupStorageDetails, acl):
     database, either based on group storage id (e.g. 'gid') or ACL name.
 
     Args:
-        groupStorageDetails (dict): Group storage id.
-        acl (bool): Determines whether the mapping should be performed based
-                    on storage credentials (e.g. 'gid' attribute) or based
-                    on ACL name ('aclName' attribute).
+    groupStorageDetails (dict): Group storage id.
+    acl (bool): Determines whether the mapping should be performed based
+    on storage credentials (e.g. 'gid' attribute) or based
+    on ACL name ('aclName' attribute).
     """
 
     LOG.info('resolve_group requested for {}'.format(groupStorageDetails))

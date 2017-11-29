@@ -19,60 +19,60 @@ USER_DETAILS_1 = {
 }
 
 USER_DETAILS_2 = {
-  "emailList": [
-    "user.1@example2.com",
-    "user.one@example2.com",
-    "user.i@example2.com"
-  ],
-  "id": "9743a66f914cc249efca164485a19c5c",
-  "connectedAccounts": [
-    {
-      "emailList": [
-        "user.1@example.com",
-        "user.one@example.com",
-        "user.i@example.com"
-      ],
-      "idp": "github",
-      "login": "user1",
-      "name": "User One",
-      "userId": "5c28904a-124a-4035-853c-36938143dd4e"
-    },
-    {
-      "custom": {
-        "eduPersonPrincipalName": "john@example.com",
-        "userCertificateSubject": "/C=PL/O=GRID/O=ACME/CN=John Doe"
-      },
-      "emailList": [
-        "user.1@egi.eu"
-      ],
-      "idp": "EGI",
-      "login": "user1",
-      "name": "User One",
-      "userId": "john@example.com"
-    }
-  ],
-  "login": "user.one",
-  "name": "user1"
+    "emailList": [
+        "user.1@example2.com",
+        "user.one@example2.com",
+        "user.i@example2.com"
+    ],
+    "id": "9743a66f914cc249efca164485a19c5c",
+    "connectedAccounts": [
+        {
+            "emailList": [
+                "user.1@example.com",
+                "user.one@example.com",
+                "user.i@example.com"
+            ],
+            "idp": "github",
+            "login": "user1",
+            "name": "User One",
+            "userId": "5c28904a-124a-4035-853c-36938143dd4e"
+        },
+        {
+            "custom": {
+                "eduPersonPrincipalName": "john@example.com",
+                "userCertificateSubject": "/C=PL/O=GRID/O=ACME/CN=John Doe"
+            },
+            "emailList": [
+                "user.1@egi.eu"
+            ],
+            "idp": "EGI",
+            "login": "user1",
+            "name": "User One",
+            "userId": "john@example.com"
+        }
+    ],
+    "login": "user.one",
+    "name": "user1"
 }
 
 USER_DETAILS_3 = {
-  "connectedAccounts": [ {
-      "emailList": [
-        "user.1@egi.eu"
-      ],
-      "idp": "EGI"
+    "connectedAccounts": [ {
+        "emailList": [
+            "user.1@egi.eu"
+        ],
+        "idp": "EGI"
     }
-  ],
+                          ],
 }
 
 USER_DETAILS_4 = {
-  "connectedAccounts": [ {
-      "emailList": [
-        "user.2@egi.eu"
-      ],
-      "idp": "EGI"
+    "connectedAccounts": [ {
+        "emailList": [
+            "user.2@egi.eu"
+        ],
+        "idp": "EGI"
     }
-  ],
+                          ],
 }
 
 POSIX_STORAGE_CREDENTIALS = {
@@ -157,15 +157,16 @@ class TestLUMA(unittest.TestCase):
         url = URL + '/admin/spaces/{sid}/default_group'.format(sid=sid)
 
         # set default space mapping
-        r = requests.put(url, json={'gid': gid})
+        r = requests.put(url, json=[{'gid': gid, 'storageName': 'LUMASTORAGE'}])
         self.assertEqual(r.status_code, 204)
 
         # check that the default space group can be retrieved using admin api
         r = requests.get(url)
-        self.assertEqual(r.json()['gid'], gid)
+        self.assertEqual(r.json()[0]['gid'], gid)
 
         # check that the default gid will be returned for map_group
-        r = requests.post(URL + '/map_group', json={"spaceId": sid})
+        r = requests.post(URL + '/map_group', json={'spaceId': sid,
+                                                    'storageName': 'LUMASTORAGE'})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), {'gid': gid})
 
@@ -190,7 +191,11 @@ class TestLUMA(unittest.TestCase):
         self.assertEqual(r.json(), [GROUP_DETAILS])
 
         # check group mapping
-        r = requests.post(URL + '/map_group', json={"idp": idp, "groupId": group_id})
+        r = requests.post(URL + '/map_group',
+                          json={"idp": idp,
+                                "groupId": group_id,
+                                "storageName": "NFS",
+                                "storageId": random_string(10)})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), GROUP_DETAILS)
 
@@ -215,7 +220,7 @@ class TestLUMA(unittest.TestCase):
         # check group resolving returning 404 without correct aclName
         r = requests.post(URL + '/resolve_acl_group', json=GROUP_DETAILS_USERS2)
         self.assertEqual(r.status_code, 404)
-        return
+
         # delete mapping
         r = requests.delete(url)
         self.assertEqual(r.status_code, 204)
@@ -223,6 +228,8 @@ class TestLUMA(unittest.TestCase):
         # after delete mapping should not be available
         r = requests.get(url)
         self.assertEqual(r.status_code, 404)
+
+        return
 
 
     def test_user_mapping(self):
@@ -290,7 +297,7 @@ class TestLUMA(unittest.TestCase):
         del posix_storage_without_aclname['aclName']
         r7 = requests.post(URL + '/resolve_acl_user', json=posix_storage_without_aclname)
         self.assertEqual(r7.status_code, 404)
-        return
+
         # delete mapping
         r8 = requests.delete(url)
         self.assertEqual(r8.status_code, 204)

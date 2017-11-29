@@ -56,7 +56,9 @@ paths:
         200:
           description: "Group details returned successfully."
           schema:
-            $ref: "#/definitions/GroupDetails"
+            type: "array"
+            items:
+              $ref: "#/definitions/GroupDetails"
         400:
           description: "Invalid request."
           schema:
@@ -97,7 +99,9 @@ paths:
         description: "Add group details for mapping."
         required: true
         schema:
-          $ref: "#/definitions/GroupDetails"
+          type: "array"
+          items:
+            $ref: "#/definitions/GroupDetails"
       responses:
         204:
           description: "Group mapping added successfully."
