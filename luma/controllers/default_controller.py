@@ -367,9 +367,10 @@ def map_group(groupIdentityRequest):
 
     if groupDetails != None and groupDetails.get('groupDetails') != None \
             and len(groupDetails['groupDetails']) > 0:
+        groupMapping = {'gid': groupDetails['groupDetails'][0]['gid']}
         LOG.info('map_group returning groupDetails {}'
-                 .format(groupDetails['groupDetails'][0]))
-        return groupDetails['groupDetails'][0], 200
+                 .format(groupMapping))
+        return groupMapping, 200
     else:
         return 'Group details not found', 404
 

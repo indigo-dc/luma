@@ -197,7 +197,7 @@ class TestLUMA(unittest.TestCase):
                                 "storageName": "NFS",
                                 "storageId": random_string(10)})
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json(), GROUP_DETAILS)
+        self.assertEqual(r.json()['gid'], GROUP_DETAILS['gid'])
 
         # check group resolving
         group_details_complete = GROUP_DETAILS.copy()
