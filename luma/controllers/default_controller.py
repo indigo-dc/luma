@@ -157,8 +157,8 @@ def add_user_details(userDetails):
         lid = USERS.insert({'userDetails': details})
         return 'OK', 201, {'Location': '/admin/users/{}'.format(lid)}
     else:
-        return ('UserDetails require at least at least one '
-                'of id or connectedAccounts'), 400
+        return ('UserDetails should have at least one '
+                'of id or linkedAccounts'), 400
 
 
 def update_user_details(lid, userDetails):
@@ -182,7 +182,7 @@ def update_user_details(lid, userDetails):
             return 'User Details not found', 404
     else:
         return ('UserDetails should have at least one '
-                'of id or connectedAccounts'), 400
+                'of id or linkedAccounts'), 400
 
 
 def get_user_details(lid):
@@ -260,14 +260,14 @@ def map_user_credentials(userCredentialsRequest):
         if user_details.get('id') != None:
             user = USERS.get(where('userDetails').id == user_details.get('id'))
 
-        # Next compare IdP specific Id's from "connectedAccounts" list
-        if user == None and user_details.get('connectedAccounts'):
-            user_accounts = user_details.get('connectedAccounts')
+        # Next compare IdP specific Id's from "linkedAccounts" list
+        if user == None and user_details.get('linkedAccounts'):
+            user_accounts = user_details.get('linkedAccounts')
             for account in user_accounts:
                 account_query = Query()
-                user = USERS.get(where('userDetails').connectedAccounts.any(
+                user = USERS.get(where('userDetails').linkedAccounts.any(
                     (account_query.idp == account.get('idp'))
-                    & (account_query.userId == account.get('userId'))))
+                    & (account_query.subjectId == account.get('subjectId'))))
                 if user != None:
                     break
 
@@ -277,15 +277,15 @@ def map_user_credentials(userCredentialsRequest):
             for email in user_details['emailList']:
                 user = USERS.get(where('userDetails').emailList.any(email))
 
-        # Finally, try to match based on emails in connectedAccounts
-        if user == None and user_details.get('connectedAccounts'):
-            user_accounts = user_details.get('connectedAccounts')
+        # Finally, try to match based on emails in linkedAccounts
+        if user == None and user_details.get('linkedAccounts'):
+            user_accounts = user_details.get('linkedAccounts')
             for account in user_accounts:
                 if account.get('emailList') == None:
                     continue
                 for email in account['emailList']:
                     account_query = Query()
-                    user = USERS.get(where('userDetails').connectedAccounts.any(
+                    user = USERS.get(where('userDetails').linkedAccounts.any(
                         (account_query.idp == account.get('idp'))
                         & (account_query.emailList.any(email))))
                     if user != None:
@@ -312,7 +312,7 @@ def map_user_credentials(userCredentialsRequest):
 
     else:
         return ('UserDetails should have at least one '
-                'of id or connectedAccounts'), 400
+                'of id or linkedAccounts'), 400
 
 
 def map_group(groupIdentityRequest):
@@ -462,11 +462,11 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
                  '{}'.format(userStorageCredentials))
         user_details = user['userDetails']
         if user_details.get('id'):
-            return {'idp': 'onedata', 'userId': user_details['id']}, 200
-        elif len(user_details.get('connectedAccounts')) > 0 \
-            and user_details['connectedAccounts'][0].get('userId'):
-            return {'idp': user_details['connectedAccounts'][0]['idp'],
-                    'userId': user_details['connectedAccounts'][0]['userId']}, 200
+            return {'idp': 'onedata', 'subjectId': user_details['id']}, 200
+        elif len(user_details.get('linkedAccounts')) > 0 \
+            and user_details['linkedAccounts'][0].get('subjectId'):
+            return {'idp': user_details['linkedAccounts'][0]['idp'],
+                    'subjectId': user_details['linkedAccounts'][0]['subjectId']}, 200
         else:
             LOG.warning('Mapping not found for userStorageCredentials: '
                         '{}'.format(userStorageCredentials))
@@ -570,3 +570,4 @@ def __resolve_group_base(groupStorageDetails, acl):
 
 def __normalize_user_details(user_details):
     return user_details
+

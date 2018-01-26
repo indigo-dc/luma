@@ -25,7 +25,7 @@ USER_DETAILS_2 = {
         "user.i@example2.com"
     ],
     "id": "9743a66f914cc249efca164485a19c5c",
-    "connectedAccounts": [
+    "linkedAccounts": [
         {
             "emailList": [
                 "user.1@example.com",
@@ -35,7 +35,7 @@ USER_DETAILS_2 = {
             "idp": "github",
             "login": "user1",
             "name": "User One",
-            "userId": "5c28904a-124a-4035-853c-36938143dd4e"
+            "subjectId": "5c28904a-124a-4035-853c-36938143dd4e"
         },
         {
             "custom": {
@@ -48,7 +48,7 @@ USER_DETAILS_2 = {
             "idp": "EGI",
             "login": "user1",
             "name": "User One",
-            "userId": "john@example.com"
+            "subjectId": "john@example.com"
         }
     ],
     "login": "user.one",
@@ -56,7 +56,7 @@ USER_DETAILS_2 = {
 }
 
 USER_DETAILS_3 = {
-    "connectedAccounts": [ {
+    "linkedAccounts": [ {
         "emailList": [
             "user.1@egi.eu"
         ],
@@ -66,7 +66,7 @@ USER_DETAILS_3 = {
 }
 
 USER_DETAILS_4 = {
-    "connectedAccounts": [ {
+    "linkedAccounts": [ {
         "emailList": [
             "user.2@egi.eu"
         ],
@@ -275,13 +275,13 @@ class TestLUMA(unittest.TestCase):
             r7 = requests.post(URL + '/resolve_user', json=credentials)
             self.assertEqual(r7.status_code, 200)
             self.assertEqual(r7.json(), {'idp': 'onedata',
-                                         'userId': USER_DETAILS_2['id']})
+                                         'subjectId': USER_DETAILS_2['id']})
 
         # check reverse luma for file with different group than owner's default
         r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP)
         self.assertEqual(r7.status_code, 200)
         self.assertEqual(r7.json(), {'idp': 'onedata',
-                                     'userId': USER_DETAILS_2['id']})
+                                     'subjectId': USER_DETAILS_2['id']})
 
         # check reverse luma for file with uid passed as string
         r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_STRINGS)
@@ -291,7 +291,7 @@ class TestLUMA(unittest.TestCase):
         r7 = requests.post(URL + '/resolve_acl_user', json=POSIX_STORAGE_CREDENTIALS)
         self.assertEqual(r7.status_code, 200)
         self.assertEqual(r7.json(), {'idp': 'onedata',
-                                     'userId': USER_DETAILS_2['id']})
+                                     'subjectId': USER_DETAILS_2['id']})
 
         posix_storage_without_aclname = POSIX_STORAGE_CREDENTIALS
         del posix_storage_without_aclname['aclName']
