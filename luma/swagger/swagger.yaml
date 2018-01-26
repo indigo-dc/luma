@@ -556,7 +556,7 @@ definitions:
       userDetails:
         id: "ASDJASDNNALSDNALSDNALSDLASD"
         name: "User One"
-        connectedAccounts:
+        linkedAccounts:
         - idp: "github"
           userId: "ASDJH65675ASD765ASD890ASD6"
           login: "user1"
@@ -573,7 +573,7 @@ definitions:
         - "user.1@example2.com"
         - "user.one@example2.com"
         - "user.i@example2.com"
-  ConnectedAccount:
+  LinkedAccount:
     type: "object"
     required:
     - "idp"
@@ -608,7 +608,7 @@ definitions:
           \ by the IdP for this user.\n"
         additionalProperties:
           type: "string"
-    description: "User connected account."
+    description: "User linked account."
     example:
       idp: "github"
       userId: "ASDJH65675ASD765ASD890ASD6"
@@ -633,11 +633,11 @@ definitions:
       name:
         type: "string"
         description: "User name."
-      connectedAccounts:
+      linkedAccounts:
         type: "array"
         description: "The list of user Open ID accounts."
         items:
-          $ref: "#/definitions/ConnectedAccount"
+          $ref: "#/definitions/LinkedAccount"
       login:
         type: "string"
         description: "User login."
@@ -650,7 +650,7 @@ definitions:
     example:
       id: "9743a66f914cc249efca164485a19c5c"
       name: "user1"
-      connectedAccounts:
+      linkedAccounts:
       - idp: "github"
         userId: "5c28904a-124a-4035-853c-36938143dd4e"
         login: "user1"
@@ -668,7 +668,7 @@ definitions:
           eduPersonPrincipalName: "john@example.com"
         emailList:
         - "user.1@example.com"
-      login: "user.one"
+      login: "user_one"
       emailList:
       - "user.1@example2.com"
       - "user.one@example2.com"

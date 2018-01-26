@@ -198,18 +198,18 @@ def random_string(length):
 
 def normalize_user_details(user_details):
     try:
-        connected_accounts = user_details['connectedAccounts']
+        linked_accounts = user_details['linkedAccounts']
     except KeyError:
-        connected_accounts = []
+        linked_accounts = []
     else:
-        del user_details['connectedAccounts']
+        del user_details['linkedAccounts']
 
     if 'id' in user_details:
         user_details['idp'] = 'onedata'
         user_details['userId'] = user_details['id']
         del user_details['id']
-        connected_accounts.insert(0, user_details)
+        linked_accounts.insert(0, user_details)
     elif 'idp' in user_details and 'userId' in user_details:
-        connected_accounts.insert(0, user_details)
+        linked_accounts.insert(0, user_details)
 
-    return connected_accounts
+    return linked_accounts
