@@ -35,7 +35,7 @@ USER_DETAILS_2 = {
       "idp": "github",
       "login": "user1",
       "name": "User One",
-      "userId": "5c28904a-124a-4035-853c-36938143dd4e"
+      "subjectId": "5c28904a-124a-4035-853c-36938143dd4e"
     },
     {
       "custom": {
@@ -48,7 +48,7 @@ USER_DETAILS_2 = {
       "idp": "EGI",
       "login": "user1",
       "name": "User One",
-      "userId": "john@example.com"
+      "subjectId": "john@example.com"
     }
   ],
   "login": "user.one",
@@ -163,9 +163,9 @@ class TestLUMA(unittest.TestCase):
             storage_name = credentials.get('storageName')
             user_id = USER_DETAILS_2['id']
             json = {'userDetails': {'id': user_id}}
-            if storage_id != None:
+            if storage_id is not None:
                 json['storageId'] = storage_id
-            if storage_name != None:
+            if storage_name is not None:
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
@@ -180,7 +180,7 @@ class TestLUMA(unittest.TestCase):
             self.assertEqual(r7.status_code, 200)
             user_details = normalize_user_details(USER_DETAILS_2)[0]
             self.assertEqual(r7.json(), {'idp': user_details['idp'],
-                                         'userId': user_details['userId']})
+                                         'subjectId': user_details['subjectId']})
 
         # delete mapping
         r8 = requests.delete(url)
@@ -198,18 +198,18 @@ def random_string(length):
 
 def normalize_user_details(user_details):
     try:
-        connected_accounts = user_details['connectedAccounts']
+        linked_accounts = user_details['linkedAccounts']
     except KeyError:
-        connected_accounts = []
+        linked_accounts = []
     else:
-        del user_details['connectedAccounts']
+        del user_details['linkedAccounts']
 
     if 'id' in user_details:
         user_details['idp'] = 'onedata'
-        user_details['userId'] = user_details['id']
+        user_details['subjectId'] = user_details['id']
         del user_details['id']
-        connected_accounts.insert(0, user_details)
-    elif 'idp' in user_details and 'userId' in user_details:
-        connected_accounts.insert(0, user_details)
+        linked_accounts.insert(0, user_details)
+    elif 'idp' in user_details and 'subjectId' in user_details:
+        linked_accounts.insert(0, user_details)
 
-    return connected_accounts
+    return linked_accounts

@@ -72,7 +72,7 @@ def post_user_details(userDetails):
         return 'OK', 201, {'Location': '/admin/users/{}'.format(lid)}
     else:
         return ('UserDetails should have at least one '
-                'of id or connectedAccounts'), 400
+                'of id or linkedAccounts'), 400
 
 
 def update_user_details(lid, userDetails):
@@ -86,7 +86,7 @@ def update_user_details(lid, userDetails):
             return 'User Details not found', 404
     else:
         return ('UserDetails should have at least one '
-                'of id or connectedAccounts'), 400
+                'of id or linkedAccounts'), 400
 
 
 def get_user_details(lid):
@@ -123,7 +123,7 @@ def map_user_credentials(userCredentialsRequest):
     user_details = normalize_user_details(userCredentialsRequest['userDetails'])
     if user_details:
         conditions = iter((where('idp') == acc['idp'])
-                          & (where('userId') == acc['userId'])
+                          & (where('subjectId') == acc['subjectId'])
                           for acc in user_details)
         query = next(conditions)
         for cond in conditions:
@@ -146,7 +146,7 @@ def map_user_credentials(userCredentialsRequest):
 
     else:
         return ('UserDetails should have at least one '
-                'of id or connectedAccounts'), 400
+                'of id or linkedAccounts'), 400
 
 
 def resolve_user_identity(userStorageCredentials):
@@ -163,7 +163,7 @@ def resolve_user_identity(userStorageCredentials):
                  '{}'.format(userStorageCredentials))
         user_details = user['userDetails'][0]
         return {'idp': user_details['idp'],
-                'userId': user_details['userId']}, 200
+                'subjectId': user_details['subjectId']}, 200
     else:
         LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
@@ -172,18 +172,18 @@ def resolve_user_identity(userStorageCredentials):
 
 def normalize_user_details(user_details):
     try:
-        connected_accounts = user_details['connectedAccounts']
+        linked_accounts = user_details['linkedAccounts']
     except KeyError:
-        connected_accounts = []
+        linked_accounts = []
     else:
-        del user_details['connectedAccounts']
+        del user_details['linkedAccounts']
 
     if 'id' in user_details:
         user_details['idp'] = 'onedata'
-        user_details['userId'] = user_details['id']
+        user_details['subjectId'] = user_details['id']
         del user_details['id']
-        connected_accounts.insert(0, user_details)
-    elif 'idp' in user_details and 'userId' in user_details:
-        connected_accounts.insert(0, user_details)
+        linked_accounts.insert(0, user_details)
+    elif 'idp' in user_details and 'subjectId' in user_details:
+        linked_accounts.insert(0, user_details)
 
-    return connected_accounts
+    return linked_accounts
