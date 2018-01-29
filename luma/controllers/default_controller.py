@@ -123,7 +123,7 @@ def map_user_credentials(userCredentialsRequest):
     user_details = normalize_user_details(userCredentialsRequest['userDetails'])
     if user_details:
         conditions = iter((where('idp') == acc['idp'])
-                          & (where('userId') == acc['userId'])
+                          & (where('subjectId') == acc['subjectId'])
                           for acc in user_details)
         query = next(conditions)
         for cond in conditions:
@@ -163,7 +163,7 @@ def resolve_user_identity(userStorageCredentials):
                  '{}'.format(userStorageCredentials))
         user_details = user['userDetails'][0]
         return {'idp': user_details['idp'],
-                'userId': user_details['userId']}, 200
+                'subjectId': user_details['subjectId']}, 200
     else:
         LOG.warning('Mapping not found for userStorageCredentials: '
                     '{}'.format(userStorageCredentials))
@@ -180,10 +180,10 @@ def normalize_user_details(user_details):
 
     if 'id' in user_details:
         user_details['idp'] = 'onedata'
-        user_details['userId'] = user_details['id']
+        user_details['subjectId'] = user_details['id']
         del user_details['id']
         linked_accounts.insert(0, user_details)
-    elif 'idp' in user_details and 'userId' in user_details:
+    elif 'idp' in user_details and 'subjectId' in user_details:
         linked_accounts.insert(0, user_details)
 
     return linked_accounts

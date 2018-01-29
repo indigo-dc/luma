@@ -558,7 +558,7 @@ definitions:
         name: "User One"
         linkedAccounts:
         - idp: "github"
-          userId: "ASDJH65675ASD765ASD890ASD6"
+          subjectId: "ASDJH65675ASD765ASD890ASD6"
           login: "user1"
           name: "User One"
           emailList:
@@ -577,14 +577,14 @@ definitions:
     type: "object"
     required:
     - "idp"
-    - "userId"
+    - "subjectId"
     properties:
       idp:
         type: "string"
         description: "ID of the identity provider."
-      userId:
+      subjectId:
         type: "string"
-        description: "User ID assigned in Onezone."
+        description: "Permanent user id assigned by IdP."
       login:
         type: "string"
         description: "User login name."
@@ -611,7 +611,7 @@ definitions:
     description: "User linked account."
     example:
       idp: "github"
-      userId: "ASDJH65675ASD765ASD890ASD6"
+      subjectId: "ASDJH65675ASD765ASD890ASD6"
       login: "user1"
       name: "User One"
       emailList:
@@ -652,7 +652,7 @@ definitions:
       name: "user1"
       linkedAccounts:
       - idp: "github"
-        userId: "5c28904a-124a-4035-853c-36938143dd4e"
+        subjectId: "5c28904a-124a-4035-853c-36938143dd4e"
         login: "user1"
         name: "User One"
         emailList:
@@ -660,7 +660,7 @@ definitions:
         - "user.one@example.com"
         - "user.i@example.com"
       - idp: "EGI"
-        userId: "john@example.com"
+        subjectId: "john@example.com"
         login: "user1"
         name: "User One"
         custom:
@@ -682,7 +682,7 @@ definitions:
           \ user to log in\ninto onezone, identical to id specified in auth.config\
           \ / saml.config.\nIf the user was created via onepanel, use the value \"\
           onezone\".\n"
-      userId:
+      subjectId:
         type: "string"
         description: "Id of user as recognized by the identity provider. If the user\
           \ was created\nvia onepanel, use the userId from onepanel (can be checked\
@@ -690,7 +690,7 @@ definitions:
     description: "User identity."
     example:
       idp: "google"
-      userId: "5484af38-8b5d-464f-bdd1-da9ef801090f"
+      subjectId: "5484af38-8b5d-464f-bdd1-da9ef801090f"
   UserStorageCredentials:
     type: "object"
     required:
