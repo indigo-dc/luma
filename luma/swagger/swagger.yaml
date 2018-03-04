@@ -856,7 +856,6 @@ definitions:
     type: "object"
     required:
     - "idp"
-    - "subjectId"
     properties:
       idp:
         type: "string"
