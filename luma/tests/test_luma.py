@@ -56,23 +56,23 @@ USER_DETAILS_2 = {
 }
 
 USER_DETAILS_3 = {
-    "linkedAccounts": [ {
+    "linkedAccounts": [{
         "emailList": [
             "user.1@egi.eu"
         ],
         "idp": "EGI"
     }
-                          ],
+    ],
 }
 
 USER_DETAILS_4 = {
-    "linkedAccounts": [ {
+    "linkedAccounts": [{
         "emailList": [
             "user.2@egi.eu"
         ],
         "idp": "EGI"
     }
-                          ],
+    ],
 }
 
 POSIX_STORAGE_CREDENTIALS = {
@@ -113,7 +113,6 @@ CEPH_STORAGE_CREDENTIALS = {
 
 GLUSTERFS_STORAGE_CREDENTIALS = {
     "storageName": "GlusterFS4",
-    "storageId": "4",
     "type": "glusterfs",
     "uid": 1001,
     "gid": 1001
@@ -138,6 +137,7 @@ GROUP_DETAILS_USERS2 = {
     "storageName": "NFS"
 }
 
+
 class TestLUMA(unittest.TestCase):
 
     @classmethod
@@ -150,14 +150,14 @@ class TestLUMA(unittest.TestCase):
     def tearDownClass(cls):
         cls.proc.kill()
 
-
     def test_default_space_mapping(self):
         sid = random_string(10)
         gid = 1010
         url = URL + '/admin/spaces/{sid}/default_group'.format(sid=sid)
 
         # set default space mapping
-        r = requests.put(url, json=[{'gid': gid, 'storageName': 'LUMASTORAGE'}])
+        r = requests.put(
+            url, json=[{'gid': gid, 'storageName': 'LUMASTORAGE'}])
         self.assertEqual(r.status_code, 204)
 
         # check that the default space group can be retrieved using admin api
@@ -175,7 +175,6 @@ class TestLUMA(unittest.TestCase):
         self.assertEqual(r.status_code, 204)
         r = requests.get(url)
         self.assertEqual(r.status_code, 404)
-
 
     def test_group_mapping(self):
         idp, group_id = random_string(10), random_string(20)
@@ -208,7 +207,8 @@ class TestLUMA(unittest.TestCase):
         # check if group without aclName field will be resolved
         group_details_without_acl = GROUP_DETAILS.copy()
         del group_details_without_acl['aclName']
-        r = requests.post(URL + '/resolve_group', json=group_details_without_acl)
+        r = requests.post(URL + '/resolve_group',
+                          json=group_details_without_acl)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), {'idp': idp, 'groupId': group_id})
 
@@ -218,7 +218,8 @@ class TestLUMA(unittest.TestCase):
         self.assertEqual(r.json(), {'idp': idp, 'groupId': group_id})
 
         # check group resolving returning 404 without correct aclName
-        r = requests.post(URL + '/resolve_acl_group', json=GROUP_DETAILS_USERS2)
+        r = requests.post(URL + '/resolve_acl_group',
+                          json=GROUP_DETAILS_USERS2)
         self.assertEqual(r.status_code, 404)
 
         # delete mapping
@@ -231,7 +232,6 @@ class TestLUMA(unittest.TestCase):
 
         return
 
-
     def test_user_mapping(self):
         # check if one can add users mapping
         r1 = requests.post(URL + '/admin/users', json=USER_DETAILS_1)
@@ -241,13 +241,15 @@ class TestLUMA(unittest.TestCase):
 
         # assert correct retrieve of data after correct insert
         r2 = requests.get(url)
-        self.assertEqual(r2.json(), normalize_user_details(USER_DETAILS_1.copy()))
+        self.assertEqual(
+            r2.json(), normalize_user_details(USER_DETAILS_1.copy()))
 
         # assert userDetails can be updated
         r3 = requests.put(url, json=USER_DETAILS_2)
         self.assertEqual(r3.status_code, 204)
         r4 = requests.get(url)
-        self.assertEqual(r4.json(), normalize_user_details(USER_DETAILS_2.copy()))
+        self.assertEqual(
+            r4.json(), normalize_user_details(USER_DETAILS_2.copy()))
 
         # set user credentials for multiple storages
         r5 = requests.put(url + '/credentials', json=MULTI_STORAGE_CREDENTIALS)
@@ -259,9 +261,9 @@ class TestLUMA(unittest.TestCase):
             storage_name = credentials.get('storageName')
             user_id = USER_DETAILS_2['id']
             json = {'userDetails': {'id': user_id}}
-            if storage_id != None:
+            if storage_id is not None:
                 json['storageId'] = storage_id
-            if storage_name != None:
+            if storage_name is not None:
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
@@ -278,24 +280,28 @@ class TestLUMA(unittest.TestCase):
                                          'subjectId': USER_DETAILS_2['id']})
 
         # check reverse luma for file with different group than owner's default
-        r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP)
+        r7 = requests.post(URL + '/resolve_user',
+                           json=POSIX_STORAGE_CREDENTIALS_DIFFERENT_GROUP)
         self.assertEqual(r7.status_code, 200)
         self.assertEqual(r7.json(), {'idp': 'onedata',
                                      'subjectId': USER_DETAILS_2['id']})
 
         # check reverse luma for file with uid passed as string
-        r7 = requests.post(URL + '/resolve_user', json=POSIX_STORAGE_CREDENTIALS_STRINGS)
+        r7 = requests.post(URL + '/resolve_user',
+                           json=POSIX_STORAGE_CREDENTIALS_STRINGS)
         self.assertEqual(r7.status_code, 404)
 
         # check reverse luma based on ACl
-        r7 = requests.post(URL + '/resolve_acl_user', json=POSIX_STORAGE_CREDENTIALS)
+        r7 = requests.post(URL + '/resolve_acl_user',
+                           json=POSIX_STORAGE_CREDENTIALS)
         self.assertEqual(r7.status_code, 200)
         self.assertEqual(r7.json(), {'idp': 'onedata',
                                      'subjectId': USER_DETAILS_2['id']})
 
         posix_storage_without_aclname = POSIX_STORAGE_CREDENTIALS
         del posix_storage_without_aclname['aclName']
-        r7 = requests.post(URL + '/resolve_acl_user', json=posix_storage_without_aclname)
+        r7 = requests.post(URL + '/resolve_acl_user',
+                           json=posix_storage_without_aclname)
         self.assertEqual(r7.status_code, 404)
 
         # delete mapping
@@ -306,7 +312,6 @@ class TestLUMA(unittest.TestCase):
         r9 = requests.get(url)
         self.assertEqual(r9.status_code, 404)
 
-
     def test_user_mapping_based_on_email(self):
         # check if one can add users mapping
         r1 = requests.post(URL + '/admin/users', json=USER_DETAILS_3)
@@ -316,7 +321,8 @@ class TestLUMA(unittest.TestCase):
 
         # assert correct retrieve of data after correct insert
         r2 = requests.get(url)
-        self.assertEqual(r2.json(), normalize_user_details(USER_DETAILS_3.copy()))
+        self.assertEqual(
+            r2.json(), normalize_user_details(USER_DETAILS_3.copy()))
 
         # set user credentials for multiple storages
         r3 = requests.put(url + '/credentials', json=MULTI_STORAGE_CREDENTIALS)
@@ -327,9 +333,9 @@ class TestLUMA(unittest.TestCase):
             storage_id = credentials.get('storageId')
             storage_name = credentials.get('storageName')
             json = {'userDetails': USER_DETAILS_3}
-            if storage_id != None:
+            if storage_id is not None:
                 json['storageId'] = storage_id
-            if storage_name != None:
+            if storage_name is not None:
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 200)
@@ -343,9 +349,9 @@ class TestLUMA(unittest.TestCase):
             storage_id = credentials.get('storageId')
             storage_name = credentials.get('storageName')
             json = {'userDetails': USER_DETAILS_4}
-            if storage_id != None:
+            if storage_id is not None:
                 json['storageId'] = storage_id
-            if storage_name != None:
+            if storage_name is not None:
                 json['storageName'] = storage_name
             r6 = requests.post(URL + '/map_user_credentials', json=json)
             self.assertEqual(r6.status_code, 404)
