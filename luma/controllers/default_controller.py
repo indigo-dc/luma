@@ -230,6 +230,11 @@ def add_user_credentials(lid, credentials):
     lid (str): LUMA user Id.
     credentials (dict): User credentials for specific storage.
     """
+    if USERS.get(eid=lid):
+        if USERS.get(eid=lid).get('credentials'):
+            tmp_credentials = USERS.get(eid=lid).get('credentials')
+            tmp_credentials.extend(credentials)
+            credentials = tmp_credentials
     if USERS.update({'credentials': credentials}, eids=[lid]):
         LOG.info('Updated credentials for /admin/users/{}'.format(lid))
         return 'OK', 204
