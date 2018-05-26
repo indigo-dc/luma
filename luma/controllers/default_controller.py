@@ -22,6 +22,7 @@ USERS = DB.table('users')
 GROUPS = DB.table('groups')
 SPACES = DB.table('spaces')
 
+VIRTUAL_USER_ID='6o8qDXjXrEl6idD1tChSIw5whgUYgUn6T1FUrAX'
 
 def get_space_default_group(sid):
     """
@@ -473,13 +474,17 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
             return {'idp': user_details['linkedAccounts'][0]['idp'],
                     'subjectId': user_details['linkedAccounts'][0]['subjectId']}, 200
         else:
-            LOG.warning('Mapping not found for userStorageCredentials: '
+            LOG.warning('Mapping not found for userStorageCredentials - '
+                        'returning virtual user id: '
                         '{}'.format(userStorageCredentials))
-            return 'Mapping not found', 404
+            return {'idp': 'onedata',
+                    'subjectId': VIRTUAL_USER_ID}, 200
     else:
-        LOG.warning('Mapping not found for userStorageCredentials: '
+        LOG.warning('Mapping not found for userStorageCredentials - '
+                    'returning virtual user id: '
                     '{}'.format(userStorageCredentials))
-        return 'Mapping not found', 404
+        return {'idp': 'onedata',
+                'subjectId': VIRTUAL_USER_ID}, 200
 
 
 def resolve_group(groupStorageDetails):

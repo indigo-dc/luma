@@ -14,6 +14,8 @@ URL = 'http://{ip}:{port}/{api_path}'.format(ip=LUMA_IP, port=LUMA_PORT,
                                              api_path=LUMA_API_PATH)
 
 
+VIRTUAL_USER_ID='6o8qDXjXrEl6idD1tChSIw5whgUYgUn6T1FUrAX'
+
 USER_DETAILS_1 = {
     "id": "9743a66f914cc249efca164485a19c5c"
 }
@@ -289,7 +291,9 @@ class TestLUMA(unittest.TestCase):
         # check reverse luma for file with uid passed as string
         r7 = requests.post(URL + '/resolve_user',
                            json=POSIX_STORAGE_CREDENTIALS_STRINGS)
-        self.assertEqual(r7.status_code, 404)
+        self.assertEqual(r7.status_code, 200)
+        self.assertEqual(r7.json(), {'idp': 'onedata',
+                                     'subjectId': VIRTUAL_USER_ID})
 
         # check reverse luma based on ACl
         r7 = requests.post(URL + '/resolve_acl_user',
