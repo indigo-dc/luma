@@ -264,16 +264,22 @@ def map_user_credentials(userCredentialsRequest):
         # First try to match based on Onedata Id
         user = None
         if user_details.get('id') != None:
-            user = USERS.get(where('userDetails').id == user_details.get('id'))
+            try:
+                user = USERS.get(where('userDetails').id == user_details.get('id'))
+            except:
+                LOG.info('Invalid query against user details')
 
         # Next compare IdP specific Id's from "linkedAccounts" list
         if user == None and user_details.get('linkedAccounts'):
             user_accounts = user_details.get('linkedAccounts')
             for account in user_accounts:
                 account_query = Query()
-                user = USERS.get(where('userDetails').linkedAccounts.any(
-                    (account_query.idp == account.get('idp'))
-                    & (account_query.subjectId == account.get('subjectId'))))
+                try:
+                    user = USERS.get(where('userDetails').linkedAccounts.any(
+                        (account_query.idp == account.get('idp'))
+                        & (account_query.subjectId == account.get('subjectId'))))
+                except:
+                    LOG.info('Invalid query against user details')
                 if user != None:
                     break
 
@@ -281,7 +287,10 @@ def map_user_credentials(userCredentialsRequest):
         # from Onedata IdP
         if user == None and user_details.get('emailList'):
             for email in user_details['emailList']:
-                user = USERS.get(where('userDetails').emailList.any(email))
+                try:
+                    user = USERS.get(where('userDetails').emailList.any(email))
+                except:
+                    LOG.info('Invalid query against user details')
 
         # Finally, try to match based on emails in linkedAccounts
         if user == None and user_details.get('linkedAccounts'):
@@ -291,9 +300,12 @@ def map_user_credentials(userCredentialsRequest):
                     continue
                 for email in account['emailList']:
                     account_query = Query()
-                    user = USERS.get(where('userDetails').linkedAccounts.any(
-                        (account_query.idp == account.get('idp'))
-                        & (account_query.emailList.any(email))))
+                    try:
+                        user = USERS.get(where('userDetails').linkedAccounts.any(
+                            (account_query.idp == account.get('idp'))
+                            & (account_query.emailList.any(email))))
+                    except:
+                        LOG.info('Invalid query against user details')
                     if user != None:
                         break
 
@@ -461,7 +473,10 @@ def __resolve_user_identity_base(userStorageCredentials, acl):
         query = next(conditions)
         for cond in conditions:
             query &= cond
-        user = USERS.get(where('credentials').any(query))
+        try:
+            user = USERS.get(where('credentials').any(query))
+        except:
+            LOG.info('Invalid query against user credentials')
 
     if user:
         LOG.info('Returning idp and gid for userStorageCredentials: '
@@ -554,7 +569,10 @@ def __resolve_group_base(groupStorageDetails, acl):
         query = next(conditions)
         for cond in conditions:
             query &= cond
-        group = GROUPS.get(where('groupDetails').any(query))
+        try:
+            group = GROUPS.get(where('groupDetails').any(query))
+        except:
+            LOG.info('Invalid query against group details')
 
     if group == None and groupStorageDetails.get('storageName') != None:
         creds = copy.deepcopy(groupStorageDetails)
