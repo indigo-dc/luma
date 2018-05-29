@@ -264,6 +264,9 @@ def map_user_credentials(userCredentialsRequest):
         # First try to match based on Onedata Id
         user = None
         if user_details.get('id') != None:
+            if user_details['id'] == VIRTUAL_USER_ID:
+                return {'uid': 0, 'gid': 0}, 200
+
             try:
                 user = USERS.get(where('userDetails').id == user_details.get('id'))
             except:
