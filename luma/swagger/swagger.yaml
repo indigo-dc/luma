@@ -18,7 +18,7 @@ info:
     \ different types of credentials.\n\nAs of now there are the following supported\
     \ storage systems, each with it's\nown type of credentials:\n * Posix\n * Ceph\n\
     \ * Amazon S3\n * Openstack Swift\n * GlusterFS\n\nMore information: [https://github.com/onedata/luma](https://github.com/onedata/luma)\n"
-  version: "17.06.0-rc6"
+  version: "18.02.0-rc3"
   title: "LUMA"
   contact:
     name: "Onedata support"
@@ -37,19 +37,141 @@ tags:
 - name: "Admin"
   description: "LUMA management endpoint"
 paths:
+  /admin/spaces/{sid}/default_group:
+    get:
+      tags:
+      - "Admin"
+      summary: "Get default space group"
+      description: "Returns default group gid for a specific space."
+      operationId: "controllers.default_controller.get_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be returned.\n"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GroupDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    put:
+      tags:
+      - "Admin"
+      summary: "Set default space group"
+      description: "Allows to specify a custom group gid for a space.\n"
+      operationId: "controllers.default_controller.set_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be set.\n"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "groupDetails"
+        description: "Add group details for mapping."
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/GroupDetails"
+      responses:
+        204:
+          description: "Group mapping added successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
+    delete:
+      tags:
+      - "Admin"
+      summary: "Delete default space group"
+      description: "Allows to remove default group gid for a space.\n"
+      operationId: "controllers.default_controller.delete_space_default_group"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "sid"
+        in: "path"
+        description: "Id of the space for which the default group gid should be removed.\n"
+        required: true
+        type: "string"
+      responses:
+        204:
+          description: "Default group removed successfully."
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Admin"
   /admin/users:
     post:
       tags:
       - "Admin"
       summary: "Add user details"
-      description: "Add user details and return user LUMA ID."
-      operationId: "controllers.default_controller.post_user_details"
+      description: "Add user details and return user LUMA ID. This operation returns\
+        \ the ID which represents the user in LUMA. It is necessary as not every user\
+        \ mapping requires user Id, thus this ID represents uniquely a certain user\
+        \ account for associated user accounts with storage credentials."
+      operationId: "controllers.default_controller.add_user_details"
       consumes:
       - "application/json"
       parameters:
       - in: "body"
         name: "userDetails"
-        description: "Add user details for mapping."
+        description: "User details for mapping."
         required: true
         schema:
           $ref: "#/definitions/UserDetails"
@@ -294,7 +416,7 @@ paths:
     put:
       tags:
       - "Admin"
-      summary: "Add group mapping"
+      summary: "Set group mapping"
       description: "Allows to add group mapping to LUMA.\n"
       operationId: "controllers.default_controller.add_group_mapping"
       consumes:
@@ -344,7 +466,7 @@ paths:
       tags:
       - "Admin"
       summary: "Delete group mapping"
-      description: "Allows to add group mapping to LUMA.\n"
+      description: "Allows to remove group mapping from LUMA.\n"
       operationId: "controllers.default_controller.delete_group_mapping"
       consumes:
       - "application/json"
@@ -381,12 +503,62 @@ paths:
       x-onedata-version: 3
       x-tags:
       - tag: "Admin"
+  /map_group:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Map group"
+      description: "Returns storage group GID based on Onedata group ID. This operation\
+        \ allows to map group owners of files from federated group Id to storage specific\
+        \ group Id. By default, each file in a space belongs to a default space group,\
+        \ however this can be changed.\n"
+      operationId: "controllers.default_controller.map_group"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "groupIdentityRequest"
+        description: "Group identity mapping request."
+        required: true
+        schema:
+          $ref: "#/definitions/GroupIdentity"
+      responses:
+        200:
+          description: "Group details returned successfully."
+          schema:
+            $ref: "#/definitions/GroupDetails"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "group"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
   /map_user_credentials:
     post:
       tags:
       - "Mapping"
-      summary: "Get user credentials"
-      description: "Returns user credentials to storage in JSON format."
+      summary: "Map user credentials"
+      description: "Returns user credentials to storage based on user federated identity.\
+        \ In general, proper storage credentials can be chosen based on any property\
+        \ from the user model, including Onedata user Id or user Id from other IdP's,\
+        \ as well as any other property such as email.\n"
       operationId: "controllers.default_controller.map_user_credentials"
       consumes:
       - "application/json"
@@ -425,12 +597,112 @@ paths:
       x-onedata-version: 3
       x-tags:
       - tag: "Mapping"
+  /resolve_acl_group:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Resolve group ACL identity"
+      description: "Returns the group identity based on group ACL name. This operation\
+        \ is used when storage supports ACL's (e.g. NFSv4 or POSIX) and it is required\
+        \ that ACL's from storage are translated to Onedata ACL's when importing data\
+        \ from legacy storage.\n"
+      operationId: "controllers.default_controller.resolve_acl_group_identity"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "groupStorageDetails"
+        description: "Group details for group mapping."
+        required: true
+        schema:
+          $ref: "#/definitions/GroupDetails"
+      responses:
+        200:
+          description: "Group identity returned successfully."
+          schema:
+            $ref: "#/definitions/GroupIdentity"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "Group credentials not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "acl"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
+  /resolve_acl_user:
+    post:
+      tags:
+      - "Mapping"
+      summary: "Resolve user ACL identity"
+      description: "Returns the user identity from storage credentials. This operation\
+        \ is used when storage supports ACL's (e.g. NFSv4 or POSIX) and it is required\
+        \ that ACL's from storage are translated to Onedata ACL's when importing data\
+        \ from legacy storage.\n"
+      operationId: "controllers.default_controller.resolve_acl_user_identity"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "userStorageCredentials"
+        description: "User storage credentials for reverse mapping."
+        required: true
+        schema:
+          $ref: "#/definitions/UserStorageCredentials"
+      responses:
+        200:
+          description: "User identity returned successfully."
+          schema:
+            $ref: "#/definitions/UserIdentity"
+        400:
+          description: "Invalid request."
+          schema:
+            $ref: "#/definitions/Error"
+        403:
+          description: "Forbidden request."
+          schema:
+            $ref: "#/definitions/Error"
+        404:
+          description: "User ACL name not found."
+          schema:
+            $ref: "#/definitions/Error"
+        500:
+          description: "Internal server error."
+          schema:
+            $ref: "#/definitions/Error"
+      x-onedata-resource: "acl"
+      x-onedata-module: "luma"
+      x-onedata-version: 3
+      x-tags:
+      - tag: "Mapping"
   /resolve_group:
     post:
       tags:
       - "Mapping"
       summary: "Resolve group identity"
-      description: "Returns group identity based on storage specific group id."
+      description: "Returns group identity based on storage specific group id. This\
+        \ operation is used when importing data from legacy storage, and it is needed\
+        \ that the user group (e.g. gid on POSIX) storages is mapped to a proper federated\
+        \ group Id. The group resolution can be performed in the context of specific\
+        \ storage (identified by `storageId` or `storageName`). In case the no storage\
+        \ group Id is passed in the `groupDetails` parameter, a default group Id for\
+        \ current space can be returned.\n"
       operationId: "controllers.default_controller.resolve_group"
       consumes:
       - "application/json"
@@ -438,8 +710,8 @@ paths:
       - "application/json"
       parameters:
       - in: "body"
-        name: "groupDetails"
-        description: "Group mapping request."
+        name: "groupStorageDetails"
+        description: "Group details for group mapping."
         required: true
         schema:
           $ref: "#/definitions/GroupDetails"
@@ -474,7 +746,10 @@ paths:
       tags:
       - "Mapping"
       summary: "Resolve user identity"
-      description: "Returns the user identity from storage credentials."
+      description: "Returns the user identity based on provided storage credentials.\
+        \ This operation is used when importing data from legacy storage, and it is\
+        \ needed that the user storage identity (e.g. uid on POSIX) storages is mapped\
+        \ to a proper federated identity.\n"
       operationId: "controllers.default_controller.resolve_user_identity"
       consumes:
       - "application/json"
@@ -483,7 +758,7 @@ paths:
       parameters:
       - in: "body"
         name: "userStorageCredentials"
-        description: "User storage credentials."
+        description: "User storage credentials for reverse mapping."
         required: true
         schema:
           $ref: "#/definitions/UserStorageCredentials"
@@ -546,6 +821,9 @@ definitions:
       storageName:
         type: "string"
         description: "Administrator defined storage name."
+      spaceId:
+        type: "string"
+        description: "Space id for which the mapping should be performed."
       userDetails:
         $ref: "#/definitions/UserDetails"
     description: "User credentials request - provides all necessary information to\
@@ -553,6 +831,7 @@ definitions:
     example:
       storageId: "AKSDHKAJSHD898798ASDKJHA89878ASD"
       storageName: "NFS"
+      spaceId: "98ASDKJHA89878ASDAKSDHKAJSHD898798"
       userDetails:
         id: "ASDJASDNNALSDNALSDNALSDLASD"
         name: "User One"
@@ -577,7 +856,6 @@ definitions:
     type: "object"
     required:
     - "idp"
-    - "subjectId"
     properties:
       idp:
         type: "string"
@@ -623,13 +901,14 @@ definitions:
       - "vo:example-org.eu/rl:administration/admin"
       custom:
       - eduPersonPrincipalName: "user.1@example.com"
-      - userCertificateSubject: "\t/C=PL/O=GRID/O=ACME/CN=User One"
+      - userCertificateSubject: "/C=PL/O=GRID/O=ACME/CN=User One"
   UserDetails:
     type: "object"
     properties:
       id:
         type: "string"
-        description: "Onedata user ID."
+        description: "Onedata user ID. This ID is by default associated with 'onedata'\
+          \ IdP.\n"
       name:
         type: "string"
         description: "User name."
@@ -684,8 +963,8 @@ definitions:
           onezone\".\n"
       subjectId:
         type: "string"
-        description: "Id of user as recognized by the identity provider. If the user\
-          \ was created\nvia onepanel, use the userId from onepanel (can be checked\
+        description: "Permanent user id assigned by the identity provider. If the\
+          \ user was created\nvia onepanel, use the userId from onepanel (can be checked\
           \ using REST).\n"
     description: "User identity."
     example:
@@ -712,27 +991,34 @@ definitions:
       storageName:
         type: "string"
         description: "Storage name. Either storageId or storageName are required."
+      aclName:
+        type: "string"
+        description: "User ACL name."
     description: "Generic storage credentials response type."
   GroupDetails:
     type: "object"
-    required:
-    - "id"
     properties:
-      id:
+      storageId:
         type: "string"
-        description: "Storage ID (site specific).\n"
+        description: "Storage ID (site specific)."
+      storageName:
+        type: "string"
+        description: "Storage Name (site specific)."
+      spaceId:
+        type: "string"
+        description: "Space id in the context of which the request is performed."
       gid:
+        type: "integer"
+        description: "Group Id on the storage."
+      aclName:
         type: "string"
-        description: "Type of storage.\n"
-      name:
-        type: "string"
-        description: "Name of the group.\n"
-    description: "Group identity. At least one of `gid` and `name` properties are\
-      \ required.\n"
+        description: "Group ACL name."
+    description: "Group storage identity.\n"
     example:
-      id: "Assdwe897Dsdjhx9"
-      gid: "1001"
-      name: "users"
+      storageId: "Assdwe897Dsdjhx9"
+      storageName: "NFS"
+      gid: 1001
+      aclName: "users"
   GroupIdentity:
     type: "object"
     properties:
@@ -743,7 +1029,12 @@ definitions:
           \ / saml.config.\n"
       groupId:
         type: "string"
-        description: "Id of a group as recognized by a specific identity provider.\n"
+        description: "Id of a group as recognized by a specific identity provider.\
+          \ If this is provided as NULL, the map_group endpoint will return the default\
+          \ GID for current space.\n"
+      spaceId:
+        type: "string"
+        description: "Space ID to provide default group context for space.\n"
     description: "Group identity."
     example:
       idp: "github"
@@ -754,27 +1045,18 @@ definitions:
     - type: "object"
       properties:
         uid:
-          type: "string"
+          type: "integer"
           description: "POSIX user ID in the local system."
         gid:
-          type: "string"
+          type: "integer"
           description: "POSIX user group ID in the local system."
-        name:
-          type: "string"
-          description: "Username for POSIX compatible ACL's."
-      description: "The POSIX storage credentials. The credentials support both basic\
-        \ POSIX identity (i.e. numeric uid/gid properties) as well as named identity\
-        \ for POSIX or NFSv4 ACL's. Depending on the type of storage either uid/gid\
-        \ or username groupname pair can be included. When requesting user identity\
-        \ based on storage credentials, only single field can be included here (e.g.\
-        \ username) for which federated user identity should be returned.\n"
+      description: "The POSIX storage credentials.\n"
   s3:
     allOf:
     - $ref: "#/definitions/UserStorageCredentials"
     - type: "object"
       required:
       - "accessKey"
-      - "secretKey"
       properties:
         accessKey:
           type: "string"
@@ -803,7 +1085,6 @@ definitions:
     - $ref: "#/definitions/UserStorageCredentials"
     - type: "object"
       required:
-      - "password"
       - "username"
       properties:
         username:
@@ -817,15 +1098,12 @@ definitions:
     allOf:
     - $ref: "#/definitions/UserStorageCredentials"
     - type: "object"
-      required:
-      - "gid"
-      - "uid"
       properties:
         uid:
-          type: "string"
+          type: "integer"
           description: "POSIX user ID in the GlusterFS server."
         gid:
-          type: "string"
+          type: "integer"
           description: "POSIX user group ID in the GlusterFS server."
         certificate:
           type: "string"

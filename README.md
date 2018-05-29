@@ -139,7 +139,7 @@ presented below:
           "login": "user.one",
           "name": "user1",
           "idp": "onedata",
-          "userId": "9743a66f914cc249efca164485a19c5c"
+          "subjectId": "9743a66f914cc249efca164485a19c5c"
         }
       ],
       "credentials": [
