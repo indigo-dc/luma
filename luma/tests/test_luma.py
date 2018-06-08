@@ -133,6 +133,12 @@ GROUP_DETAILS = {
     "storageName": "NFS"
 }
 
+GROUP_DETAILS_POSIX = {
+    "gid": 1001,
+    "aclName": "users",
+    "storageName": "POSIX"
+}
+
 GROUP_DETAILS_USERS2 = {
     "gid": 1001,
     "aclName": "users2",
@@ -187,9 +193,13 @@ class TestLUMA(unittest.TestCase):
         r = requests.put(url, json=[GROUP_DETAILS])
         self.assertEqual(r.status_code, 204)
 
+        # add another group maping for different storage
+        r = requests.put(url, json=[GROUP_DETAILS_POSIX])
+        self.assertEqual(r.status_code, 204)
+        
         # assert correct retrieve of data after correct insert
         r = requests.get(url)
-        self.assertEqual(r.json(), [GROUP_DETAILS])
+        self.assertEqual(r.json(), [GROUP_DETAILS,GROUP_DETAILS_POSIX])
 
         # check group mapping
         r = requests.post(URL + '/map_group',

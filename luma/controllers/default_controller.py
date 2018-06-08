@@ -98,9 +98,13 @@ def add_group_mapping(idp, groupId, groupDetails):
     """
     LOG.info('Adding group mapping ({}, {}) -> {}'.format(idp, groupId,
                                                           str(groupDetails)))
-    GROUPS.remove((where('idp') == idp) & (where('groupId') == groupId))
-    GROUPS.insert({'idp': idp, 'groupId': groupId,
-                   'groupDetails': groupDetails})
+    group = GROUPS.get((where('idp') == idp) & (where('groupId') == groupId))
+    if group:
+        GROUPS.update({'idp': idp, 'groupId': groupId,
+                    'groupDetails': group['groupDetails'] + groupDetails})
+    else:
+        GROUPS.insert({'idp': idp, 'groupId': groupId,
+                    'groupDetails': groupDetails})
     return 'OK', 204
 
 
