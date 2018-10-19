@@ -25,7 +25,7 @@ be simply started as follows:
 
 ```
 $ touch db.json # Create persistent database file
-$ docker run -d --net=host -v $PWD/db.json:/luma/db.json onedata/luma:17.06.0-rc6
+$ docker run -d --net=host -v $PWD/db.json:/luma/db.json onedata/luma:18.02.0-rc12
 ```
 
 ### Natively using python
