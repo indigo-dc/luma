@@ -29,16 +29,23 @@ push:
 	$(shell echo "Artifact docker.onedata.org/luma:ID-${HASH}" >> luma-docker-build-report.txt)
 	$(shell echo "	To get image run:" >> luma-docker-build-report.txt)
 	$(shell echo "		docker pull docker.onedata.org/luma:ID-${HASH}" >> luma-docker-build-report.txt)
+
+	$(shell echo "{" > luma-docker-build-report.json)
+
 ifneq ($(TICKET),)
 	docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:VFS-${TICKET}
 	docker push ${PREFIX}/${REPO_NAME}:VFS-${TICKET}
 	$(shell echo "		docker pull docker.onedata.org/luma:VFS-${TICKET}" >> luma-docker-build-report.txt)
+	$(shell echo "\"git-branch\": \"docker.onedata.org/luma:VFS-${TICKET}\"," >> luma-docker-build-report.json)
 endif
 ifneq ($(RELEASE),)
 	docker tag ${PREFIX}/${REPO_NAME}:ID-${HASH} ${PREFIX}/${REPO_NAME}:${RELEASE}
 	docker push ${PREFIX}/${REPO_NAME}:${RELEASE}
 	$(shell echo "		docker pull docker.onedata.org/luma:${RELEASE}" >> luma-docker-build-report.txt)
+	$(shell echo "\"git-tag\": \"docker.onedata.org/luma:${RELEASE}\"," >> luma-docker-build-report.json)
 endif
+	$(shell echo "\"git-commit\": \"docker.onedata.org/luma:ID-${HASH}\"" >> luma-docker-build-report.json)
+	$(shell echo "}" >> luma-docker-build-report.json)
 
 
 test:
