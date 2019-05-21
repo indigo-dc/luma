@@ -18,7 +18,7 @@ info:
     \ different types of credentials.\n\nAs of now there are the following supported\
     \ storage systems, each with it's\nown type of credentials:\n * Posix\n * Ceph\n\
     \ * Amazon S3\n * Openstack Swift\n * GlusterFS\n\nMore information: [https://github.com/onedata/luma](https://github.com/onedata/luma)\n"
-  version: "18.02.0-rc13"
+  version: "18.02.1"
   title: "LUMA"
   contact:
     name: "Onedata support"
