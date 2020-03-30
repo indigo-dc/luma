@@ -1,1 +1,7 @@
+.git
+.settings
+.idea
+
+luma-docker-build-report.txt
+
 __pycache__
